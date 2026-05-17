@@ -20,15 +20,17 @@ import java.util.Map;
 public class GlobalExceptionHandler {
 
     @ExceptionHandler(BusinessException.class)
-    public ResponseEntity<?> handleBusinessException(BusinessException ex, WebRequest request) {
+    public ResponseEntity<ApiResponse<?>> handleBusiness(BusinessException ex, WebRequest request) {
         log.warn("Business exception: code={}, message={}", ex.getErrorCode(), ex.getMessage());
-        return ResponseEntity.status(ex.getHttpStatus()).body(ApiResponse.error(ex.getMessage()));
+        return ResponseEntity.status(ex.getHttpStatus())
+                .body(ApiResponse.error(ex.getMessage()));
     }
 
     @ExceptionHandler(AuthenticationException.class)
-    public ResponseEntity<?> handleAuth(AuthenticationException ex) {
-        log.warn("Authentication exception: message={}", ex.getMessage());
-        return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(ApiResponse.error("Invalid credentials"));
+    public ResponseEntity<ApiResponse<?>> handleAuth(AuthenticationException ex) {
+        log.warn("Authentication failed: {}", ex.getMessage());
+        return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
+                .body(ApiResponse.error("Invalid credentials"));
     }
 
     @ExceptionHandler(AccessDeniedException.class)
