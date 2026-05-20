@@ -19,8 +19,14 @@ public class User extends BaseEntity {
     private String password;
     @Column(nullable = false)
     @Enumerated(EnumType.STRING)
-    private Role role;
+    private Role role=Role.CUSTOMER;
     @Column(nullable = false)
     private Boolean isActive=true;
+    @Column(nullable = false)
+    private Boolean isEmailVerified=false;
 
+    public User( String email,String password) {
+        this.email = email;
+        this.password = password;
+    }
 }
