@@ -16,6 +16,19 @@ spring:
       hibernate:
         dialect: org.hibernate.dialect.PostgreSQLDialect
 
+  mail:
+    host: smtp.gmail.com
+    port: 587
+    username: ${YOUR_EMAIL_ADDRESS}
+    password: ${YOUR_EMAIL_APP_PASSWORD}
+    protocol: smtp
+    properties:
+      mail:
+        smtp:
+          auth: true
+          starttls:
+            enable: true
+
 logging:
   level:
     root: info
@@ -25,6 +38,10 @@ logging:
       hibernate: warn
 server:
   port: 8081
+app:
+  base:
+    url: http://localhost:8081
+kind: Application
 
 
 

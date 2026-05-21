@@ -6,14 +6,16 @@ public record UserResponse(
         String id,
         String email,
         String role,
-        Boolean isActive
+        Boolean isActive,
+        Boolean isEmailVerified
 ) {
     public static UserResponse from(User user) {
         return new UserResponse(
                 user.getId(),
                 user.getEmail(),
                 user.getRole().name(),
-                user.getIsActive()
+                user.getIsActive(),
+                user.getIsEmailVerified()
         );
     }
 }

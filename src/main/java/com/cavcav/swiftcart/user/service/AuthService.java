@@ -1,6 +1,7 @@
 package com.cavcav.swiftcart.user.service;
 
 
+import com.cavcav.swiftcart.notfication.service.EmailService;
 import com.cavcav.swiftcart.user.dto.request.LoginRequest;
 import com.cavcav.swiftcart.user.dto.request.RegisterRequest;
 import com.cavcav.swiftcart.user.dto.response.AuthResponse;
@@ -12,14 +13,17 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 
 import javax.naming.AuthenticationException;
+import java.util.Random;
 
 @Service
 @Slf4j
 public class AuthService {
     private final UserRepository userRepository;
+    private final EmailService emailService;
 
-    public AuthService(UserRepository userRepository) {
+    public AuthService(UserRepository userRepository, EmailService emailService) {
         this.userRepository = userRepository;
+        this.emailService = emailService;
     }
 
     public AuthResponse signup(RegisterRequest registerRequest) {
@@ -28,12 +32,12 @@ public class AuthService {
         if(newUser.getRole().name().isBlank())
             newUser.setRole(Role.CUSTOMER);
         User savedUser = userRepository.save(newUser);
+        emailService.sendVerificationEmail(savedUser.getEmail(),generateRandomToken());
         log.info(
                 "User successfully registered with id: {} and email: {}",
                 savedUser.getId(),
                 savedUser.getEmail()
         );
-
         return AuthResponse.of(null, UserResponse.from(savedUser));
 
     }
@@ -51,5 +55,11 @@ public class AuthService {
         log.info("User logged in successfully. User id: {}, email: {}", findUser.getId(), findUser.getEmail());
 
         return AuthResponse.of("Token", UserResponse.from(findUser));
+    }
+
+    private String generateRandomToken() {
+        Random random = new Random();
+        int token = 100000 + random.nextInt(900000);
+        return String.valueOf(token);
     }
 }
