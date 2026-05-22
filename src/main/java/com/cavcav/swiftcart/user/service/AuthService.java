@@ -29,8 +29,6 @@ public class AuthService {
     public AuthResponse signup(RegisterRequest registerRequest) {
         log.info("Signup request received for email: {}", registerRequest.email());
         User newUser = new User(registerRequest.email(), registerRequest.password());
-        if(newUser.getRole().name().isBlank())
-            newUser.setRole(Role.CUSTOMER);
         User savedUser = userRepository.save(newUser);
         emailService.sendVerificationEmail(savedUser.getEmail(),generateRandomToken());
         log.info(
