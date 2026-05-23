@@ -1,27 +1,14 @@
 package com.cavcav.swiftcart.user.service;
 
+import com.cavcav.swiftcart.common.response.PaginationResponse;
 import com.cavcav.swiftcart.user.dto.response.UserResponse;
-import com.cavcav.swiftcart.user.model.User;
-import com.cavcav.swiftcart.user.repository.UserRepository;
-import lombok.extern.slf4j.Slf4j;
-import org.springframework.stereotype.Service;
-
 
 import java.util.List;
 
-@Service
-@Slf4j
-public class UserService {
+public interface UserService {
 
-    private final UserRepository userRepository;
+    PaginationResponse<UserResponse> getUsers(int page, int size, String sortBy, String direction);
+    UserResponse getUserById(String id);
+    UserResponse getUserByEmail(String email);
 
-
-    public UserService(UserRepository userRepository) {
-        this.userRepository = userRepository;
-    }
-
-    public List<UserResponse> getUsers() {
-        List<User> users = userRepository.findAll();
-        return users.stream().map(UserResponse::from).toList();
-    }
 }

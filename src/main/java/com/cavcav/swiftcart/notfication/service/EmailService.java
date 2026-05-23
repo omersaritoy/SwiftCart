@@ -36,7 +36,7 @@ public class EmailService {
             helper.setFrom(fromAddress, "SwiftCart");
             helper.setTo(toEmail);
             helper.setSubject("SwiftCart — E-posta Adresinizi Doğrulayın");
-            helper.setText(buildHtml(toEmail, verificationUrl), true);
+            helper.setText(buildHtmlSignup(toEmail, verificationUrl), true);
 
             mailSender.send(message);
             log.info("Verification email sent → {}", toEmail);
@@ -47,7 +47,7 @@ public class EmailService {
             log.error("Unexpected error sending email → {}", toEmail, e);
         }
     }
-    private String buildHtml(String email, String verificationUrl) {
+    private String buildHtmlSignup(String email, String verificationUrl) {
         return """
                 <!DOCTYPE html>
                 <html lang="tr">
