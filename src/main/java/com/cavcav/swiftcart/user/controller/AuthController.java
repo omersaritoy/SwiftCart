@@ -1,9 +1,11 @@
 package com.cavcav.swiftcart.user.controller;
 
 import com.cavcav.swiftcart.common.response.ApiResponse;
+import com.cavcav.swiftcart.notfication.service.EmailVerificationService;
 import com.cavcav.swiftcart.user.dto.request.LoginRequest;
 import com.cavcav.swiftcart.user.dto.request.RegisterRequest;
 import com.cavcav.swiftcart.user.dto.response.AuthResponse;
+import com.cavcav.swiftcart.user.dto.response.UserResponse;
 import com.cavcav.swiftcart.user.service.AuthService;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -15,19 +17,21 @@ import javax.naming.AuthenticationException;
 public class AuthController {
 
     private final AuthService authService;
+    private final EmailVerificationService emailVerificationService;
 
-    public AuthController(AuthService authService) {
+    public AuthController(AuthService authService, EmailVerificationService emailVerificationService) {
         this.authService = authService;
+        this.emailVerificationService = emailVerificationService;
     }
 
     @PostMapping
     public ResponseEntity<AuthResponse> signup(@RequestBody RegisterRequest registerRequest) {
         return ResponseEntity.ok(authService.signup(registerRequest));
     }
+
     @GetMapping("/verify")
-    public ResponseEntity<ApiResponse<?>> verifyEmail(@RequestParam String token) {
-        authService.verifyEmail(token);
-        return ResponseEntity.ok(ApiResponse.success("Email verified successfully", null));
+    public ResponseEntity<ApiResponse<UserResponse>> verify(@RequestParam String token) {
+        return ResponseEntity.ok(ApiResponse.success(emailVerificationService.verify(token)));
     }
 
     @PostMapping("/login")
