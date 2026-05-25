@@ -41,7 +41,7 @@ logging:
     root: info
     org:
       springframework:
-        security: warn
+        security: Trace
       hibernate: warn
 server:
   port: 8081

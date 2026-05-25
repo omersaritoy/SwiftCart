@@ -61,7 +61,7 @@ public class AuthService {
                     );
                 });
 
-        if (request.password().equals(user.getPassword())) {
+        if (!request.password().equals(user.getPassword())) {
             log.warn("Login failed - wrong password: email={}", request.email());
             throw new BusinessException(
                     "Invalid credentials",
@@ -89,6 +89,7 @@ public class AuthService {
         }
 
         log.info("Login successful: id={}, email={}", user.getId(), user.getEmail());
+
         return AuthResponse.of("token-will-be-added", UserResponse.from(user));
     }
 }
