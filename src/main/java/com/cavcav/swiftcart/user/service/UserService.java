@@ -3,8 +3,6 @@ package com.cavcav.swiftcart.user.service;
 import com.cavcav.swiftcart.common.response.PaginationResponse;
 import com.cavcav.swiftcart.user.dto.response.UserResponse;
 
-import java.util.List;
-
 public interface UserService {
 
     PaginationResponse<UserResponse> getUsers(int page, int size, String sortBy, String direction);

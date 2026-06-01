@@ -5,12 +5,15 @@ import lombok.extern.slf4j.Slf4j;
 
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.authentication.BadCredentialsException;
+import org.springframework.security.authentication.DisabledException;
+import org.springframework.security.authentication.LockedException;
+import org.springframework.security.core.AuthenticationException;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
 import org.springframework.web.context.request.WebRequest;
 
-import javax.naming.AuthenticationException;
 import java.nio.file.AccessDeniedException;
 import java.util.HashMap;
 import java.util.Map;
@@ -24,6 +27,23 @@ public class GlobalExceptionHandler {
         log.warn("Business exception: code={}, message={}", ex.getErrorCode(), ex.getMessage());
         return ResponseEntity.status(ex.getHttpStatus())
                 .body(ApiResponse.error(ex.getMessage()));
+    }
+    @ExceptionHandler(DisabledException.class)
+    public ResponseEntity<ApiResponse<?>> handleDisabled(DisabledException e) {
+        return ResponseEntity.status(HttpStatus.FORBIDDEN)
+                .body(ApiResponse.error("Please verify your email first"));
+    }
+
+    @ExceptionHandler(LockedException.class)
+    public ResponseEntity<ApiResponse<?>> handleLocked(LockedException e) {
+        return ResponseEntity.status(HttpStatus.FORBIDDEN)
+                .body(ApiResponse.error("Account is deactivated"));
+    }
+
+    @ExceptionHandler(BadCredentialsException.class)
+    public ResponseEntity<ApiResponse<?>> handleBadCredentials(BadCredentialsException e) {
+        return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
+                .body(ApiResponse.error("Invalid email or password"));
     }
 
     @ExceptionHandler(AuthenticationException.class)

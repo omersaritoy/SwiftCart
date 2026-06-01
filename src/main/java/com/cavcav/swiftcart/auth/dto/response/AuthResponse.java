@@ -1,4 +1,6 @@
-package com.cavcav.swiftcart.user.dto.response;
+package com.cavcav.swiftcart.auth.dto.response;
+
+import com.cavcav.swiftcart.user.dto.response.UserResponse;
 
 public record AuthResponse(
         String token,

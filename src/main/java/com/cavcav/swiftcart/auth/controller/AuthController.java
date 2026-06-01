@@ -1,12 +1,12 @@
-package com.cavcav.swiftcart.user.controller;
+package com.cavcav.swiftcart.auth.controller;
 
 import com.cavcav.swiftcart.common.response.ApiResponse;
 import com.cavcav.swiftcart.notfication.service.EmailVerificationService;
-import com.cavcav.swiftcart.user.dto.request.LoginRequest;
-import com.cavcav.swiftcart.user.dto.request.RegisterRequest;
-import com.cavcav.swiftcart.user.dto.response.AuthResponse;
+import com.cavcav.swiftcart.auth.dto.request.LoginRequest;
+import com.cavcav.swiftcart.auth.dto.request.RegisterRequest;
+import com.cavcav.swiftcart.auth.dto.response.AuthResponse;
+import com.cavcav.swiftcart.auth.service.AuthService;
 import com.cavcav.swiftcart.user.dto.response.UserResponse;
-import com.cavcav.swiftcart.user.service.AuthService;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 

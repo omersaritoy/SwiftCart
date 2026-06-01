@@ -7,8 +7,6 @@ import com.cavcav.swiftcart.user.service.UserService;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
-import java.util.List;
-
 @RestController
 @RequestMapping("/api/v1/user")
 public class UserController {
@@ -27,13 +25,13 @@ public class UserController {
             @RequestParam(defaultValue = "DESC") String direction) {
         return ResponseEntity.ok(ApiResponse.success(userService.getUsers(page, size, sortBy, direction)));
     }
-    @GetMapping("/{id}")
-    public ResponseEntity<ApiResponse<UserResponse>> getUserById(@PathVariable String id) {
+    @GetMapping("/")
+    public ResponseEntity<ApiResponse<UserResponse>> getUserById(@RequestParam(value = "id") String id) {
         return ResponseEntity.ok(ApiResponse.success(userService.getUserById(id)));
     }
 
-    @GetMapping("/email/{email}")
-    public ResponseEntity<ApiResponse<UserResponse>> getUserByEmail(@PathVariable String email) {
+    @GetMapping("/email/")
+    public ResponseEntity<ApiResponse<UserResponse>> getUserByEmail(@RequestParam(value = "email") String email) {
         return ResponseEntity.ok(ApiResponse.success(userService.getUserByEmail(email)));
     }
 
