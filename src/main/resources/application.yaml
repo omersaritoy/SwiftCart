@@ -46,8 +46,11 @@ app:
     url: http://localhost:8081
 
 jwt:
-  secret-key: ${JWT_SECRET_KEY:Axq5ZKcgIlGYMi5lpRWHe5tsebqmy0bL4np2uTDdvvg}
-  expiration: 3600000
+  access-secret: ${JWT_SECRET_KEY:Axq5ZKcgIlGYMi5lpRWHe5tsebqmy0bL4np2uTDdvvg}
+  refresh-secret: ${JWT_REFRESH_KEY:Axq5ZKcgIlGYM5asdaRWHeSsay0SADSADSAvg}
+  access-expiration: 900.000
+  refresh-expiration: 604.800.000
+
 
 kind: Application
 
