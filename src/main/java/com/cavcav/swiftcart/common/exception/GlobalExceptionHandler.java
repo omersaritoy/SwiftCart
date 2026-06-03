@@ -40,6 +40,7 @@ public class GlobalExceptionHandler {
                 .body(ApiResponse.error("Account is deactivated"));
     }
 
+
     @ExceptionHandler(BadCredentialsException.class)
     public ResponseEntity<ApiResponse<?>> handleBadCredentials(BadCredentialsException e) {
         return ResponseEntity.status(HttpStatus.UNAUTHORIZED)

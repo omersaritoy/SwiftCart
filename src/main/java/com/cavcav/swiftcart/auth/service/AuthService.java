@@ -5,7 +5,6 @@ import com.cavcav.swiftcart.auth.dto.request.LoginRequest;
 import com.cavcav.swiftcart.auth.dto.request.RegisterRequest;
 import com.cavcav.swiftcart.auth.dto.response.AuthResponse;
 import com.cavcav.swiftcart.auth.security.UserPrincipal;
-import com.cavcav.swiftcart.common.config.AuthenticationEntryPointConfig;
 import com.cavcav.swiftcart.common.exception.BusinessException;
 import com.cavcav.swiftcart.notfication.service.EmailVerificationService;
 
@@ -30,6 +29,8 @@ public class AuthService {
     private final EmailVerificationService emailVerificationService;
     private final PasswordEncoder passwordEncoder;
     private final AuthenticationManager authenticationManager;
+    private final JwtService jwtService;
+
 
     public AuthResponse signup(RegisterRequest request) {
         log.info("Signup request: email={}", request.email());
@@ -48,8 +49,11 @@ public class AuthService {
 
         emailVerificationService.sendVerificationEmail(saved);
 
+        String accessToken=jwtService.generateAccessToken(saved.getEmail(),saved.getId(), String.valueOf(saved.getRole()));
+        String refreshToken=jwtService.generateRefreshToken(saved.getEmail(),saved.getId());
+
         log.info("User registered: id={}, email={}", saved.getId(), saved.getEmail());
-        return AuthResponse.of(null, UserResponse.from(saved));
+        return AuthResponse.of(accessToken,refreshToken, UserResponse.from(saved));
     }
 
     public AuthResponse login(LoginRequest request) {
@@ -77,14 +81,18 @@ public class AuthService {
         if (!user.getIsActive()) {
             log.warn("Login failed - deactivated: email={}", request.email());
             throw new BusinessException(
-                    "Account is deactivated",
-                    "ACCOUNT_DEACTIVATED",
+                    "Account is not activated",
+                    "ACCOUNT_IS_NOT_ACTIVATED",
                     HttpStatus.FORBIDDEN
             );
         }
 
         log.info("Login successful: id={}, email={}", user.getId(), user.getEmail());
 
-        return AuthResponse.of("token-will-be-added", UserResponse.from(user));
+
+        String accessToken=jwtService.generateAccessToken(user.getEmail(),user.getId(), String.valueOf(user.getRole()));
+        String refreshToken=jwtService.generateRefreshToken(user.getEmail(),user.getId());
+
+        return AuthResponse.of(accessToken,refreshToken, UserResponse.from(user));
     }
 }

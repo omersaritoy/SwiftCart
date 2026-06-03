@@ -33,7 +33,7 @@ public class JwtService {
 
 
     public String generateAccessToken(String email, String userId, String role) {
-        return buildToken(
+        return "Bearer "+buildToken(
                 Map.of("role", role, "userId", userId, "type", "ACCESS"),
                 email,
                 accessExpiration,
@@ -42,7 +42,7 @@ public class JwtService {
     }
 
     public String generateRefreshToken(String email, String userId) {
-        return buildToken(
+        return "Bearer "+buildToken(
                 Map.of("userId", userId, "type", "REFRESH"),
                 email,
                 refreshExpiration,
