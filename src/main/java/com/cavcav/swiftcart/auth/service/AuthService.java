@@ -1,6 +1,7 @@
 package com.cavcav.swiftcart.auth.service;
 
 
+import com.cavcav.swiftcart.auth.dto.UserRegisteredEvent;
 import com.cavcav.swiftcart.auth.dto.request.LoginRequest;
 import com.cavcav.swiftcart.auth.dto.request.RegisterRequest;
 import com.cavcav.swiftcart.auth.dto.response.AuthResponse;
@@ -13,6 +14,8 @@ import com.cavcav.swiftcart.user.model.User;
 import com.cavcav.swiftcart.user.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.context.ApplicationEventPublisher;
+import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
@@ -20,16 +23,19 @@ import org.springframework.security.core.Authentication;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
+import java.util.concurrent.TimeUnit;
+
 @Service
 @RequiredArgsConstructor
 @Slf4j
 public class AuthService {
 
     private final UserRepository userRepository;
-    private final EmailVerificationService emailVerificationService;
+    private final ApplicationEventPublisher eventPublisher;
     private final PasswordEncoder passwordEncoder;
     private final AuthenticationManager authenticationManager;
     private final JwtService jwtService;
+    private final RedisTemplate<String, String> redisTemplate;
 
 
     public AuthResponse signup(RegisterRequest request) {
@@ -47,13 +53,11 @@ public class AuthService {
         User user = new User(request.email(), passwordEncoder.encode(request.password()));
         User saved = userRepository.save(user);
 
-        emailVerificationService.sendVerificationEmail(saved);
 
-        String accessToken=jwtService.generateAccessToken(saved.getEmail(),saved.getId(), String.valueOf(saved.getRole()));
-        String refreshToken=jwtService.generateRefreshToken(saved.getEmail(),saved.getId());
+        eventPublisher.publishEvent(new UserRegisteredEvent(saved));
 
         log.info("User registered: id={}, email={}", saved.getId(), saved.getEmail());
-        return AuthResponse.of(accessToken,refreshToken, UserResponse.from(saved));
+        return AuthResponse.of(null, null, UserResponse.from(saved));
     }
 
     public AuthResponse login(LoginRequest request) {
@@ -94,5 +98,36 @@ public class AuthService {
         String refreshToken=jwtService.generateRefreshToken(user.getEmail(),user.getId());
 
         return AuthResponse.of(accessToken,refreshToken, UserResponse.from(user));
+    }
+    public void logout(String accessHeader, String refreshHeader) {
+
+
+        if (accessHeader != null && accessHeader.startsWith("Bearer ")) {
+            String accessToken = accessHeader.replace("Bearer", "").trim();
+            long accessExpiration = jwtService.getAccessTokenExpiration(accessToken);
+            if (accessExpiration > 0) {
+                redisTemplate.opsForValue().set(
+                        "blacklist:" + accessToken,
+                        "true",
+                        accessExpiration,
+                        TimeUnit.MILLISECONDS
+                );
+            }
+        }
+
+        if (refreshHeader != null && refreshHeader.startsWith("Bearer ")) {
+            String refreshToken = refreshHeader.replace("Bearer", "").trim();
+            long refreshExpiration = jwtService.getRefreshTokenExpiration(refreshToken);
+            if (refreshExpiration > 0) {
+                redisTemplate.opsForValue().set(
+                        "blacklist:" + refreshToken,
+                        "true",
+                        refreshExpiration,
+                        TimeUnit.MILLISECONDS
+                );
+            }
+        }
+
+        log.info("User logged out successfully");
     }
 }

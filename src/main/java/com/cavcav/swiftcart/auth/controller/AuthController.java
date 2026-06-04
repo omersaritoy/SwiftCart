@@ -10,10 +10,10 @@ import com.cavcav.swiftcart.user.dto.response.UserResponse;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
-import javax.naming.AuthenticationException;
 
 @RestController
 @RequestMapping("/api/v1/auth")
+@CrossOrigin("*")
 public class AuthController {
 
     private final AuthService authService;
@@ -29,13 +29,23 @@ public class AuthController {
         return ResponseEntity.ok(authService.signup(registerRequest));
     }
 
+
+    @PostMapping("/login")
+    public ResponseEntity<AuthResponse> login(@RequestBody LoginRequest loginRequest){
+        return ResponseEntity.ok(authService.login(loginRequest));
+    }
+
+    @PostMapping("/logout")
+    public ResponseEntity<ApiResponse<?>> logout(
+            @RequestHeader("Authorization") String accessHeader,
+            @RequestHeader("Refresh-Token") String refreshHeader) {
+        authService.logout(accessHeader, refreshHeader);
+        return ResponseEntity.ok(ApiResponse.success("Logged out successfully", null));
+    }
+
+
     @GetMapping("/verify")
     public ResponseEntity<ApiResponse<UserResponse>> verify(@RequestParam String token) {
         return ResponseEntity.ok(ApiResponse.success(emailVerificationService.verify(token)));
-    }
-
-    @PostMapping("/login")
-    public ResponseEntity<AuthResponse> login(@RequestBody LoginRequest loginRequest) throws AuthenticationException {
-        return ResponseEntity.ok(authService.login(loginRequest));
     }
 }
