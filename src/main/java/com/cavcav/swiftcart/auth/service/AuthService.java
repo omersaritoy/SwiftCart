@@ -7,7 +7,6 @@ import com.cavcav.swiftcart.auth.dto.request.RegisterRequest;
 import com.cavcav.swiftcart.auth.dto.response.AuthResponse;
 import com.cavcav.swiftcart.auth.security.UserPrincipal;
 import com.cavcav.swiftcart.common.exception.BusinessException;
-import com.cavcav.swiftcart.notfication.service.EmailVerificationService;
 
 import com.cavcav.swiftcart.user.dto.response.UserResponse;
 import com.cavcav.swiftcart.user.model.User;
