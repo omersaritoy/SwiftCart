@@ -30,19 +30,21 @@ public class GlobalExceptionHandler {
     }
     @ExceptionHandler(DisabledException.class)
     public ResponseEntity<ApiResponse<?>> handleDisabled(DisabledException e) {
+        log.warn("Login failed - email not verified");
         return ResponseEntity.status(HttpStatus.FORBIDDEN)
                 .body(ApiResponse.error("Please verify your email first"));
     }
 
     @ExceptionHandler(LockedException.class)
     public ResponseEntity<ApiResponse<?>> handleLocked(LockedException e) {
+        log.warn("Login failed - account deactivated");
         return ResponseEntity.status(HttpStatus.FORBIDDEN)
                 .body(ApiResponse.error("Account is deactivated"));
     }
 
-
     @ExceptionHandler(BadCredentialsException.class)
     public ResponseEntity<ApiResponse<?>> handleBadCredentials(BadCredentialsException e) {
+        log.warn("Login failed - invalid credentials");
         return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
                 .body(ApiResponse.error("Invalid email or password"));
     }

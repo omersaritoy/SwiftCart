@@ -1,38 +1,35 @@
 package com.cavcav.swiftcart.auth.controller;
 
+import com.cavcav.swiftcart.auth.dto.response.LoginResponse;
+import com.cavcav.swiftcart.auth.dto.response.SignupResponse;
 import com.cavcav.swiftcart.common.response.ApiResponse;
 import com.cavcav.swiftcart.notfication.service.EmailVerificationService;
 import com.cavcav.swiftcart.auth.dto.request.LoginRequest;
 import com.cavcav.swiftcart.auth.dto.request.RegisterRequest;
-import com.cavcav.swiftcart.auth.dto.response.AuthResponse;
 import com.cavcav.swiftcart.auth.service.AuthService;
 import com.cavcav.swiftcart.user.dto.response.UserResponse;
+import jakarta.validation.Valid;
+import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 
 @RestController
 @RequestMapping("/api/v1/auth")
-@CrossOrigin("*")
+@RequiredArgsConstructor
 public class AuthController {
 
     private final AuthService authService;
     private final EmailVerificationService emailVerificationService;
 
-    public AuthController(AuthService authService, EmailVerificationService emailVerificationService) {
-        this.authService = authService;
-        this.emailVerificationService = emailVerificationService;
-    }
-
     @PostMapping
-    public ResponseEntity<AuthResponse> signup(@RequestBody RegisterRequest registerRequest) {
-        return ResponseEntity.ok(authService.signup(registerRequest));
+    public ResponseEntity<ApiResponse<SignupResponse>> signup(@Valid @RequestBody RegisterRequest request) {
+        return ResponseEntity.ok(ApiResponse.success(authService.signup(request)));
     }
-
 
     @PostMapping("/login")
-    public ResponseEntity<AuthResponse> login(@RequestBody LoginRequest loginRequest){
-        return ResponseEntity.ok(authService.login(loginRequest));
+    public ResponseEntity<ApiResponse<LoginResponse>> login(@Valid @RequestBody LoginRequest request) {
+        return ResponseEntity.ok(ApiResponse.success(authService.login(request)));
     }
 
     @PostMapping("/logout")
@@ -47,5 +44,10 @@ public class AuthController {
     @GetMapping("/verify")
     public ResponseEntity<ApiResponse<UserResponse>> verify(@RequestParam String token) {
         return ResponseEntity.ok(ApiResponse.success(emailVerificationService.verify(token)));
+    }
+    @PostMapping("/refresh")
+    public ResponseEntity<ApiResponse<LoginResponse>> refresh(
+            @RequestHeader("Refresh-Token") String refreshHeader) {
+        return ResponseEntity.ok(ApiResponse.success(authService.refresh(refreshHeader)));
     }
 }

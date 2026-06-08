@@ -4,7 +4,8 @@ package com.cavcav.swiftcart.auth.service;
 import com.cavcav.swiftcart.auth.dto.UserRegisteredEvent;
 import com.cavcav.swiftcart.auth.dto.request.LoginRequest;
 import com.cavcav.swiftcart.auth.dto.request.RegisterRequest;
-import com.cavcav.swiftcart.auth.dto.response.AuthResponse;
+import com.cavcav.swiftcart.auth.dto.response.LoginResponse;
+import com.cavcav.swiftcart.auth.dto.response.SignupResponse;
 import com.cavcav.swiftcart.auth.security.UserPrincipal;
 import com.cavcav.swiftcart.common.exception.BusinessException;
 
@@ -37,7 +38,7 @@ public class AuthService {
     private final RedisTemplate<String, String> redisTemplate;
 
 
-    public AuthResponse signup(RegisterRequest request) {
+    public SignupResponse signup(RegisterRequest request) {
         log.info("Signup request: email={}", request.email());
 
         if (userRepository.existsByEmail(request.email())) {
@@ -56,10 +57,10 @@ public class AuthService {
         eventPublisher.publishEvent(new UserRegisteredEvent(saved));
 
         log.info("User registered: id={}, email={}", saved.getId(), saved.getEmail());
-        return AuthResponse.of(null, null, UserResponse.from(saved));
+        return SignupResponse.from(saved);
     }
 
-    public AuthResponse login(LoginRequest request) {
+    public LoginResponse login(LoginRequest request) {
         log.info("Login attempt: email={}", request.email());
 
         Authentication authentication = authenticationManager.authenticate(
@@ -68,41 +69,23 @@ public class AuthService {
                         request.password()
                 ));
 
-        UserPrincipal principal= (UserPrincipal) authentication.getPrincipal();
-        User user=principal.user();
+        UserPrincipal principal = (UserPrincipal) authentication.getPrincipal();
+        User user = principal.user();
 
-
-        if (!user.getIsEmailVerified()) {
-            log.warn("Login failed - email not verified: email={}", request.email());
-            throw new BusinessException(
-                    "Please verify your email first",
-                    "EMAIL_NOT_VERIFIED",
-                    HttpStatus.FORBIDDEN
-            );
-        }
-
-        if (!user.getIsActive()) {
-            log.warn("Login failed - deactivated: email={}", request.email());
-            throw new BusinessException(
-                    "Account is not activated",
-                    "ACCOUNT_IS_NOT_ACTIVATED",
-                    HttpStatus.FORBIDDEN
-            );
-        }
+        String accessToken = jwtService.generateAccessToken(
+                user.getEmail(), user.getId(), String.valueOf(user.getRole()));
+        String refreshToken = jwtService.generateRefreshToken(
+                user.getEmail(), user.getId());
 
         log.info("Login successful: id={}, email={}", user.getId(), user.getEmail());
-
-
-        String accessToken=jwtService.generateAccessToken(user.getEmail(),user.getId(), String.valueOf(user.getRole()));
-        String refreshToken=jwtService.generateRefreshToken(user.getEmail(),user.getId());
-
-        return AuthResponse.of(accessToken,refreshToken, UserResponse.from(user));
+        return LoginResponse.of(accessToken, refreshToken, UserResponse.from(user));
     }
+
     public void logout(String accessHeader, String refreshHeader) {
 
 
         if (accessHeader != null && accessHeader.startsWith("Bearer ")) {
-            String accessToken = accessHeader.replace("Bearer", "").trim();
+            String accessToken = accessHeader.substring(7);
             long accessExpiration = jwtService.getAccessTokenExpiration(accessToken);
             if (accessExpiration > 0) {
                 redisTemplate.opsForValue().set(
@@ -115,7 +98,7 @@ public class AuthService {
         }
 
         if (refreshHeader != null && refreshHeader.startsWith("Bearer ")) {
-            String refreshToken = refreshHeader.replace("Bearer", "").trim();
+            String refreshToken = refreshHeader.substring(7);
             long refreshExpiration = jwtService.getRefreshTokenExpiration(refreshToken);
             if (refreshExpiration > 0) {
                 redisTemplate.opsForValue().set(
@@ -129,4 +112,74 @@ public class AuthService {
 
         log.info("User logged out successfully");
     }
+
+
+    public LoginResponse refresh(String refreshHeader) {
+        log.info("Token refresh request received");
+        if (refreshHeader == null || !refreshHeader.startsWith("Bearer ")) {
+            throw new BusinessException(
+                    "Invalid authorization header",
+                    "INVALID_AUTH_HEADER",
+                    HttpStatus.BAD_REQUEST
+            );
+        }
+        String refreshToken = refreshHeader.substring(7);
+
+        if (redisTemplate.hasKey("blacklist:" + refreshToken)) {
+            log.warn("Blacklisted refresh token used");
+            throw new BusinessException(
+                    "Refresh token has been invalidated",
+                    "INVALID_REFRESH_TOKEN",
+                    HttpStatus.UNAUTHORIZED
+            );
+        }
+        if (!jwtService.isRefreshTokenValid(refreshToken)) {
+            log.warn("Invalid or expired refresh token");
+            throw new BusinessException(
+                    "Invalid or expired refresh token",
+                    "INVALID_REFRESH_TOKEN",
+                    HttpStatus.UNAUTHORIZED
+            );
+        }
+        String email = jwtService.extractEmailFromRefreshToken(refreshToken);
+        User user = userRepository.findByEmail(email)
+                .orElseThrow(() -> {
+                    log.warn("User not found for refresh: email={}", email);
+                    return new BusinessException(
+                            "User not found",
+                            "USER_NOT_FOUND",
+                            HttpStatus.NOT_FOUND
+                    );
+                });
+        if (!user.getIsActive() || !user.getIsEmailVerified()) {
+            log.warn("Inactive user tried to refresh token: email={}", email);
+            throw new BusinessException(
+                    "Account is not active",
+                    "ACCOUNT_NOT_ACTIVE",
+                    HttpStatus.FORBIDDEN
+            );
+        }
+        String newAccessToken = jwtService.generateAccessToken(
+                user.getEmail(),
+                user.getId(),
+                String.valueOf(user.getRole())
+        );
+
+        String newRefreshToken = jwtService.generateRefreshToken(
+                user.getEmail(), user.getId());
+
+        long oldExpiration = jwtService.getRefreshTokenExpiration(refreshToken);
+        if (oldExpiration > 0) {
+            redisTemplate.opsForValue().set(
+                    "blacklist:" + refreshToken,
+                    "true",
+                    oldExpiration,
+                    TimeUnit.MILLISECONDS
+            );
+        }
+        log.info("Token refreshed successfully: email={}", email);
+        return LoginResponse.of(newAccessToken, refreshToken, UserResponse.from(user));
+    }
 }
+
+
