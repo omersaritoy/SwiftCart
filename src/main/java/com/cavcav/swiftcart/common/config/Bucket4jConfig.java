@@ -6,5 +6,5 @@ import org.springframework.context.annotation.Configuration;
 @Configuration
 public class Bucket4jConfig {
 
-    @Value()
+
 }
