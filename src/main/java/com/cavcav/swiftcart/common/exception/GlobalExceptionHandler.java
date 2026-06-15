@@ -28,6 +28,11 @@ public class GlobalExceptionHandler {
         return ResponseEntity.status(ex.getHttpStatus())
                 .body(ApiResponse.error(ex.getMessage()));
     }
+    @ExceptionHandler(BusinessException.class)
+    public ResponseEntity<ApiResponse<?>> handleBusiness(Exception ex, WebRequest request) {
+
+    }
+
     @ExceptionHandler(DisabledException.class)
     public ResponseEntity<ApiResponse<?>> handleDisabled(DisabledException e) {
         log.warn("Login failed - email not verified");
