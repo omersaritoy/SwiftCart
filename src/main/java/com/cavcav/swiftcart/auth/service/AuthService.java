@@ -9,6 +9,7 @@ import com.cavcav.swiftcart.auth.dto.response.SignupResponse;
 import com.cavcav.swiftcart.auth.security.UserPrincipal;
 import com.cavcav.swiftcart.common.exception.BusinessException;
 
+import com.cavcav.swiftcart.common.service.RateLimitService;
 import com.cavcav.swiftcart.user.dto.response.UserResponse;
 import com.cavcav.swiftcart.user.model.User;
 import com.cavcav.swiftcart.user.repository.UserRepository;
@@ -36,9 +37,10 @@ public class AuthService {
     private final AuthenticationManager authenticationManager;
     private final JwtService jwtService;
     private final RedisTemplate<String, String> redisTemplate;
+    private final RateLimitService rateLimitService;
 
-
-    public SignupResponse signup(RegisterRequest request) {
+    public SignupResponse signup(RegisterRequest request,String ip) {
+        rateLimitService.checkSignupLimit(ip);
         log.info("Signup request: email={}", request.email());
 
         if (userRepository.existsByEmail(request.email())) {
@@ -61,6 +63,7 @@ public class AuthService {
     }
 
     public LoginResponse login(LoginRequest request) {
+        rateLimitService.checkLoginLimit(request.email());
         log.info("Login attempt: email={}", request.email());
 
         Authentication authentication = authenticationManager.authenticate(
@@ -115,6 +118,7 @@ public class AuthService {
 
 
     public LoginResponse refresh(String refreshHeader) {
+        rateLimitService.checkRefreshLimit(refreshHeader);
         log.info("Token refresh request received");
         if (refreshHeader == null || !refreshHeader.startsWith("Bearer ")) {
             throw new BusinessException(
@@ -178,7 +182,7 @@ public class AuthService {
             );
         }
         log.info("Token refreshed successfully: email={}", email);
-        return LoginResponse.of(newAccessToken, refreshToken, UserResponse.from(user));
+        return LoginResponse.of(newAccessToken, newRefreshToken, UserResponse.from(user));
     }
 }
 

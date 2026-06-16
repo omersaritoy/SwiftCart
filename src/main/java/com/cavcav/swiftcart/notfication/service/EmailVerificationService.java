@@ -1,6 +1,7 @@
 package com.cavcav.swiftcart.notfication.service;
 
 import com.cavcav.swiftcart.common.exception.BusinessException;
+import com.cavcav.swiftcart.common.service.RateLimitService;
 import com.cavcav.swiftcart.user.dto.response.UserResponse;
 import com.cavcav.swiftcart.user.model.User;
 import com.cavcav.swiftcart.user.repository.UserRepository;
@@ -21,6 +22,7 @@ public class EmailVerificationService {
     private final UserRepository userRepository;
     private final RedisTemplate<String, String> redisTemplate;
     private final EmailService emailService;
+    private final RateLimitService rateLimitService;
 
     public void sendVerificationEmail(User user) {
         String token = generateToken();
@@ -30,6 +32,7 @@ public class EmailVerificationService {
     }
 
     public UserResponse verify(String token) {
+        rateLimitService.checkVerifyLimit(token);
         log.info("Email verification request: token={}", token);
 
         String userId = redisTemplate.opsForValue().get("verify:" + token);

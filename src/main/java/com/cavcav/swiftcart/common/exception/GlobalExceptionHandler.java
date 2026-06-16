@@ -14,7 +14,7 @@ import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
 import org.springframework.web.context.request.WebRequest;
 
-import java.nio.file.AccessDeniedException;
+import org.springframework.security.access.AccessDeniedException;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -28,9 +28,18 @@ public class GlobalExceptionHandler {
         return ResponseEntity.status(ex.getHttpStatus())
                 .body(ApiResponse.error(ex.getMessage()));
     }
-    @ExceptionHandler(BusinessException.class)
-    public ResponseEntity<ApiResponse<?>> handleBusiness(Exception ex, WebRequest request) {
+    @ExceptionHandler(RateLimitException.class)
+    public ResponseEntity<ApiResponse<?>> handleRateLimit(RateLimitException ex) {
+        log.warn("Rate limit exceeded: key={}, retryAfter={}s", ex.getKey(), ex.getRetryAfter());
 
+        return ResponseEntity
+                .status(HttpStatus.TOO_MANY_REQUESTS)
+                .header("Retry-After", String.valueOf(ex.getRetryAfter()))
+                .header("X-RateLimit-Limit", String.valueOf(ex.getLimit()))
+                .header("X-RateLimit-Remaining", "0")
+                .body(ApiResponse.error(
+                        "Rate limit exceeded. Please try again in " + ex.getRetryAfter() + " seconds."
+                ));
     }
 
     @ExceptionHandler(DisabledException.class)

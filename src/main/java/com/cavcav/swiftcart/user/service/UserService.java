@@ -8,5 +8,4 @@ public interface UserService {
     PaginationResponse<UserResponse> getUsers(int page, int size, String sortBy, String direction);
     UserResponse getUserById(String id);
     UserResponse getUserByEmail(String email);
-
 }
