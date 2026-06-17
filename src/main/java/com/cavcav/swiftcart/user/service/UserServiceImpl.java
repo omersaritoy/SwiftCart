@@ -8,6 +8,7 @@ import com.cavcav.swiftcart.user.repository.UserRepository;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
@@ -60,5 +61,18 @@ public class UserServiceImpl implements UserService {
                 });
 
         return UserResponse.from(user);
+    }
+
+    @Override
+    public PaginationResponse<UserResponse> searchUsers(String email, int page, int size) {
+        log.info("Searching users: email={}, page={}, size={}", email, page, size);
+        Pageable pageable = PageRequest.of(page, size, Sort.by("createdAt").descending());
+
+        Page<User> userPage = (email != null && !email.isBlank())
+                ? userRepository.findByEmailContainingIgnoreCase(email, pageable)
+                : userRepository.findAll(pageable);
+
+        log.info("Search completed: total={}", userPage.getTotalElements());
+        return PaginationResponse.of(userPage.map(UserResponse::from));
     }
 }
