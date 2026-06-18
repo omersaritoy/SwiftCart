@@ -1,5 +1,6 @@
 package com.cavcav.swiftcart.common.config;
 
+import com.cavcav.swiftcart.auth.security.UserPrincipal;
 import com.cavcav.swiftcart.auth.service.JwtService;
 import com.cavcav.swiftcart.user.repository.UserRepository;
 import jakarta.servlet.FilterChain;
@@ -41,23 +42,20 @@ public class JwtFilter extends OncePerRequestFilter {
             return;
         }
 
-        String token = authHeader.replace("Bearer", "").trim();
+        String token = authHeader.substring(7); // ✅
 
-        // Blacklist kontrolü
-        if (isBlacklisted(token)) {
+        if (redisTemplate.hasKey("blacklist:" + token)) { // ✅
             log.warn("Blacklisted token used: path={}", request.getRequestURI());
             response.sendError(HttpServletResponse.SC_UNAUTHORIZED, "Token has been invalidated");
             return;
         }
 
-        // Token geçerli mi?
         if (!jwtService.isAccessTokenValid(token)) {
             log.warn("Invalid access token: path={}", request.getRequestURI());
             response.sendError(HttpServletResponse.SC_UNAUTHORIZED, "Invalid or expired token");
             return;
         }
 
-        // Refresh token ile access token endpoint'ine istek atmaya çalışıyor mu?
         String tokenType = jwtService.extractTokenType(token);
         if (!"ACCESS".equals(tokenType)) {
             log.warn("Refresh token used as access token: path={}", request.getRequestURI());
@@ -66,12 +64,10 @@ public class JwtFilter extends OncePerRequestFilter {
         }
 
         String email = jwtService.extractEmailFromAccessToken(token);
-        String role = jwtService.extractRoleFromAccessToken(token);
 
-        // Kullanıcı hâlâ aktif mi?
         userRepository.findByEmail(email).ifPresentOrElse(user -> {
             if (!user.getIsActive() || !user.getIsEmailVerified()) {
-                log.warn("Inactive or unverified user tried to access: email={}", email);
+                log.warn("Inactive or unverified user: email={}", email);
                 try {
                     response.sendError(HttpServletResponse.SC_UNAUTHORIZED, "Account is not active");
                 } catch (IOException e) {
@@ -80,18 +76,18 @@ public class JwtFilter extends OncePerRequestFilter {
                 return;
             }
 
-            // SecurityContext'e set et
+            UserPrincipal principal = new UserPrincipal(user);
+
             UsernamePasswordAuthenticationToken authentication =
                     new UsernamePasswordAuthenticationToken(
-                            user,
+                            principal,
                             null,
-                            List.of(new SimpleGrantedAuthority("ROLE_" + role))
+                            principal.getAuthorities() // ✅ DB'den geliyor
                     );
             authentication.setDetails(new WebAuthenticationDetailsSource().buildDetails(request));
             SecurityContextHolder.getContext().setAuthentication(authentication);
 
-            log.debug("JWT authentication successful: email={}, path={}",
-                    email, request.getRequestURI());
+            log.debug("JWT authentication successful: email={}, path={}", email, request.getRequestURI());
 
         }, () -> log.warn("User not found from token: email={}", email));
 

@@ -50,18 +50,6 @@ public class UserServiceImpl implements UserService {
         return UserResponse.from(user);
     }
 
-    @Override
-    public UserResponse getUserByEmail(String email) {
-        log.info("Fetching user: email={}", email);
-
-        User user = userRepository.findByEmail(email)
-                .orElseThrow(() -> {
-                    log.warn("User not found: email={}", email);
-                    return new BusinessException("User not found", "USER_NOT_FOUND", HttpStatus.NOT_FOUND);
-                });
-
-        return UserResponse.from(user);
-    }
 
     @Override
     public PaginationResponse<UserResponse> searchUsers(String email, int page, int size) {
