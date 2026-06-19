@@ -9,7 +9,8 @@ import com.cavcav.swiftcart.auth.dto.response.SignupResponse;
 import com.cavcav.swiftcart.auth.security.UserPrincipal;
 import com.cavcav.swiftcart.common.exception.BusinessException;
 
-import com.cavcav.swiftcart.common.service.RateLimitService;
+//import com.cavcav.swiftcart.common.service.RateLimitService;
+import com.cavcav.swiftcart.common.service.RateLimitService2;
 import com.cavcav.swiftcart.user.dto.response.UserResponse;
 import com.cavcav.swiftcart.user.model.User;
 import com.cavcav.swiftcart.user.repository.UserRepository;
@@ -37,7 +38,7 @@ public class AuthService {
     private final AuthenticationManager authenticationManager;
     private final JwtService jwtService;
     private final RedisTemplate<String, String> redisTemplate;
-    private final RateLimitService rateLimitService;
+    private final RateLimitService2 rateLimitService;
 
     public SignupResponse signup(RegisterRequest request,String ip) {
         rateLimitService.checkSignupLimit(ip);

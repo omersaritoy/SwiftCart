@@ -1,7 +1,8 @@
 package com.cavcav.swiftcart.notfication.service;
 
 import com.cavcav.swiftcart.common.exception.BusinessException;
-import com.cavcav.swiftcart.common.service.RateLimitService;
+//import com.cavcav.swiftcart.common.service.RateLimitService;
+import com.cavcav.swiftcart.common.service.RateLimitService2;
 import com.cavcav.swiftcart.user.dto.response.UserResponse;
 import com.cavcav.swiftcart.user.model.User;
 import com.cavcav.swiftcart.user.repository.UserRepository;
@@ -22,7 +23,7 @@ public class EmailVerificationService {
     private final UserRepository userRepository;
     private final RedisTemplate<String, String> redisTemplate;
     private final EmailService emailService;
-    private final RateLimitService rateLimitService;
+    private final RateLimitService2 rateLimitService;
 
     public void sendVerificationEmail(User user) {
         String token = generateToken();
