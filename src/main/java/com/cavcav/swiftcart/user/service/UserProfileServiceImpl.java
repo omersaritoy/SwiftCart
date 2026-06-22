@@ -7,10 +7,13 @@ import com.cavcav.swiftcart.user.model.User;
 import com.cavcav.swiftcart.user.model.UserProfile;
 import com.cavcav.swiftcart.user.repository.UserProfileRepository;
 import com.cavcav.swiftcart.user.repository.UserRepository;
+import io.lettuce.core.KillArgs;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
+
+import static io.lettuce.core.KillArgs.Builder.id;
 
 @Service
 @Slf4j
@@ -42,6 +45,19 @@ public class UserProfileServiceImpl implements UserProfileService {
 
         profile = userProfileRepository.save(profile);
 
-        return UserProfileResponse.from(profile,userId);
+        return UserProfileResponse.from(profile, userId);
+    }
+
+    @Override
+    public UserProfileResponse getUserProfile(String userId) {
+        User user = userRepository.findById(userId).orElseThrow(() -> new BusinessException("User not found id:" + userId, "USER_NOT_FOUND", HttpStatus.NOT_FOUND));
+        UserProfile profile = userProfileRepository.getUserProfileByUser(user)
+                .orElseThrow(() -> new BusinessException(
+                        "Profile not found",
+                        "PROFILE_NOT_FOUND",
+                        HttpStatus.NOT_FOUND));
+
+
+        return UserProfileResponse.from(profile, userId);
     }
 }

@@ -14,10 +14,12 @@ import com.cavcav.swiftcart.common.service.RateLimitService2;
 import com.cavcav.swiftcart.user.dto.response.UserResponse;
 import com.cavcav.swiftcart.user.model.User;
 import com.cavcav.swiftcart.user.repository.UserRepository;
+import jakarta.servlet.http.HttpServletRequest;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.data.redis.core.RedisTemplate;
+import org.springframework.http.HttpRequest;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
@@ -40,8 +42,8 @@ public class AuthService {
     private final RedisTemplate<String, String> redisTemplate;
     private final RateLimitService2 rateLimitService;
 
-    public SignupResponse signup(RegisterRequest request,String ip) {
-        rateLimitService.checkSignupLimit(ip);
+    public SignupResponse signup(RegisterRequest request, HttpServletRequest httpRequest) {
+        rateLimitService.checkSignupLimit(getClientIp(httpRequest));
         log.info("Signup request: email={}", request.email());
 
         if (userRepository.existsByEmail(request.email())) {
@@ -184,6 +186,13 @@ public class AuthService {
         }
         log.info("Token refreshed successfully: email={}", email);
         return LoginResponse.of(newAccessToken, newRefreshToken, UserResponse.from(user));
+    }
+    private String getClientIp(HttpServletRequest request) {
+        String ip = request.getHeader("X-Forwarded-For");
+        if (ip == null || ip.isBlank()) {
+            ip = request.getRemoteAddr();
+        }
+        return ip;
     }
 }
 

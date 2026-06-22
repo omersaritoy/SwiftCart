@@ -8,13 +8,10 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
 @RestController
-@RequestMapping("/api/v1/userProfile")
+@RequestMapping("/api/v1/profile")
 @RequiredArgsConstructor
 public class UserProfileController {
     private final UserProfileService userProfileService;
@@ -24,5 +21,10 @@ public class UserProfileController {
     public ResponseEntity<UserProfileResponse> createUserProfile(@RequestBody CreateUserProfileRequest request, Authentication authentication) {
         UserPrincipal principal = (UserPrincipal) authentication.getPrincipal();
         return ResponseEntity.ok(userProfileService.createUserProfile(principal.getId(), request));
+    }
+    @GetMapping("/me")
+    public ResponseEntity<UserProfileResponse> getCurrentUserProfile(Authentication authentication) {
+        UserPrincipal principal = (UserPrincipal) authentication.getPrincipal();
+        return ResponseEntity.ok(userProfileService.getUserProfile(principal.getId()));
     }
 }

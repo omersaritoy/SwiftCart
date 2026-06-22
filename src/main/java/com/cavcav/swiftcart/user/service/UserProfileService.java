@@ -7,5 +7,6 @@ import com.cavcav.swiftcart.user.model.UserProfile;
 public interface UserProfileService {
 
     UserProfileResponse createUserProfile(String userId,CreateUserProfileRequest request);
+    UserProfileResponse getUserProfile(String userId);
 
 }

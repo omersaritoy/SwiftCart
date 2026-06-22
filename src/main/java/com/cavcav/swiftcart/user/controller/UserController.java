@@ -4,6 +4,7 @@ import com.cavcav.swiftcart.auth.security.UserPrincipal;
 import com.cavcav.swiftcart.common.response.ApiResponse;
 import com.cavcav.swiftcart.common.response.PaginationResponse;
 import com.cavcav.swiftcart.user.dto.response.UserResponse;
+import com.cavcav.swiftcart.user.model.Role;
 import com.cavcav.swiftcart.user.service.UserService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
@@ -50,6 +51,24 @@ public class UserController {
             @RequestParam(defaultValue = "20") int size) {
         return ResponseEntity.ok(ApiResponse.success(
                 userService.searchUsers(email, page, size)));
+    }
+
+    @PatchMapping("/{id}/status")
+    @PreAuthorize("hasRole('ADMIN')")
+    public ResponseEntity<ApiResponse<UserResponse>> updateUserStatus(@PathVariable String id) {
+        return ResponseEntity.ok(ApiResponse.success(userService.changeUserStatus(id)));
+    }
+
+    @PatchMapping("/{id}/role")
+    @PreAuthorize("hasRole('ADMIN')")
+    public ResponseEntity<ApiResponse<UserResponse>> updateUserRole(@PathVariable("id") String userId, @RequestParam Role role) {
+        return ResponseEntity.ok(ApiResponse.success(userService.updateUserRole(userId, role)));
+    }
+
+    @DeleteMapping("/{id}")
+    @PreAuthorize("hasRole('ADMIN') OR #id==authentication.principal.id")
+    public ResponseEntity<ApiResponse<String>> deleteUser(@PathVariable String id) {
+        return ResponseEntity.ok(ApiResponse.success(userService.deleteUserById(id)));
     }
 
 }

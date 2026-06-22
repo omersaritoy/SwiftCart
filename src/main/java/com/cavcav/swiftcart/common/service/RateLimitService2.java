@@ -32,7 +32,7 @@ public class RateLimitService2 {
     }
 
     public void checkGeneralLimit(String ip) {
-        check("general:" + ip, 3, Duration.ofMinutes(1));
+        check("general:" + ip, 5, Duration.ofMinutes(1));
     }
 
     private void check(String key, int maxRequests, Duration window) {

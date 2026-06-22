@@ -26,7 +26,7 @@ public class AuthController {
     @PostMapping
     public ResponseEntity<ApiResponse<SignupResponse>> signup(@Valid @RequestBody RegisterRequest request, HttpServletRequest httpRequest) {
         return ResponseEntity.ok(ApiResponse.success(
-                authService.signup(request, getClientIp(httpRequest))));
+                authService.signup(request, httpRequest)));
     }
 
     @PostMapping("/login")
@@ -54,11 +54,5 @@ public class AuthController {
         return ResponseEntity.ok(ApiResponse.success(authService.refresh(refreshHeader)));
     }
 
-    private String getClientIp(HttpServletRequest request) {
-        String ip = request.getHeader("X-Forwarded-For");
-        if (ip == null || ip.isBlank()) {
-            ip = request.getRemoteAddr();
-        }
-        return ip;
-    }
+
 }

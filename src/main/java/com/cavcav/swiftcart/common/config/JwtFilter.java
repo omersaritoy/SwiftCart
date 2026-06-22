@@ -42,9 +42,9 @@ public class JwtFilter extends OncePerRequestFilter {
             return;
         }
 
-        String token = authHeader.substring(7); // ✅
+        String token = authHeader.substring(7);
 
-        if (redisTemplate.hasKey("blacklist:" + token)) { // ✅
+        if (redisTemplate.hasKey("blacklist:" + token)) {
             log.warn("Blacklisted token used: path={}", request.getRequestURI());
             response.sendError(HttpServletResponse.SC_UNAUTHORIZED, "Token has been invalidated");
             return;
