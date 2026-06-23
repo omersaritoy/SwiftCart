@@ -8,6 +8,7 @@ import com.cavcav.swiftcart.user.model.Role;
 import com.cavcav.swiftcart.user.model.User;
 import com.cavcav.swiftcart.user.repository.UserRepository;
 import jakarta.transaction.Transactional;
+import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
@@ -19,18 +20,15 @@ import org.springframework.stereotype.Service;
 
 @Service
 @Slf4j
+@RequiredArgsConstructor
 public class UserServiceImpl implements UserService {
 
     private final UserRepository userRepository;
-    private final RateLimitService2 rateLimitService;
 
-    public UserServiceImpl(UserRepository userRepository, RateLimitService2 rateLimitService) {
-        this.userRepository = userRepository;
-        this.rateLimitService = rateLimitService;
-    }
 
     @Override
     public PaginationResponse<UserResponse> getUsers(int page, int size, String sortBy, String direction) {
+
         log.info("Fetching users: page={}, size={}, sortBy={}, direction={}", page, size, sortBy, direction);
 
         Sort sort = direction.equalsIgnoreCase("DESC")

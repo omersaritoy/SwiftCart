@@ -2,6 +2,7 @@ package com.cavcav.swiftcart.user.service;
 
 import com.cavcav.swiftcart.common.exception.BusinessException;
 import com.cavcav.swiftcart.user.dto.request.CreateUserProfileRequest;
+import com.cavcav.swiftcart.user.dto.request.UpdateUserProfileRequest;
 import com.cavcav.swiftcart.user.dto.response.UserProfileResponse;
 import com.cavcav.swiftcart.user.model.User;
 import com.cavcav.swiftcart.user.model.UserProfile;
@@ -59,5 +60,23 @@ public class UserProfileServiceImpl implements UserProfileService {
 
 
         return UserProfileResponse.from(profile, userId);
+    }
+
+    @Override
+    public UserProfileResponse updateUserProfile(String profileId, UpdateUserProfileRequest request) {
+        UserProfile profile = getUserProfileById(profileId);
+
+        profile.setFirstName(request.firstName());
+        profile.setLastName(request.lastName());
+        profile.setPhone(request.phone());
+        profile.setBirthDate(request.birthDate());
+
+        UserProfile updated = userProfileRepository.save(profile);
+
+        return UserProfileResponse.from(updated, updated.getUser().getId());
+    }
+
+    private UserProfile getUserProfileById(String profileId) {
+        return userProfileRepository.findById(profileId).orElseThrow(() -> new BusinessException("User profile not found id:" + profileId, "USER_PROFILE_NOT_FOUND", HttpStatus.NOT_FOUND));
     }
 }
