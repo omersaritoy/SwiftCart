@@ -13,4 +13,5 @@ public interface UserProfileRepository extends JpaRepository<UserProfile, String
 
     Optional<UserProfile> getUserProfileByUser(User user);
 
+    Optional<UserProfile> findByUserId(String id);
 }

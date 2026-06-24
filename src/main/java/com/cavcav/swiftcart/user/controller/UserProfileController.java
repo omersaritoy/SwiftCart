@@ -11,6 +11,7 @@ import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.multipart.MultipartFile;
 
 @RestController
 @RequestMapping("/api/v1/profile")
@@ -41,5 +42,20 @@ public class UserProfileController {
     public ResponseEntity<UserProfileResponse> updateUserProfile(@RequestBody UpdateUserProfileRequest request, Authentication authentication) {
         UserPrincipal principal = (UserPrincipal) authentication.getPrincipal();
         return ResponseEntity.ok(userProfileService.updateUserProfile(principal.getId(), request));
+    }
+
+    @PostMapping("/avatar")
+    public ResponseEntity<UserProfileResponse> uploadAvatar(@RequestParam MultipartFile file, @AuthenticationPrincipal UserPrincipal userPrincipal) {
+        return ResponseEntity.ok(userProfileService.uploadAvatar(
+                        userPrincipal.getId(),
+                        file
+                )
+        );
+    }
+
+    @DeleteMapping("/avatar")
+    public ResponseEntity<String> deleteAvatar(@AuthenticationPrincipal UserPrincipal userPrincipal) {
+        userProfileService.deleteAvatar(userPrincipal.getId());
+        return ResponseEntity.ok("Avatar deleted successfully");
     }
 }

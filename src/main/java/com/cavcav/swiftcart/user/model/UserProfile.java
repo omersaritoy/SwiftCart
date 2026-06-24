@@ -8,6 +8,7 @@ import lombok.*;
 import java.time.LocalDate;
 
 
+@EqualsAndHashCode(callSuper = true)
 @Entity
 @Table(name = "user_profile")
 @Data
