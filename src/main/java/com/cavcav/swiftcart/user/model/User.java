@@ -25,6 +25,8 @@ public class User extends BaseEntity {
     @Column(nullable = false)
     private Boolean isEmailVerified=false;
 
+
+
     public User( String email,String password) {
         this.email = email;
         this.password = password;

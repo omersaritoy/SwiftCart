@@ -1,5 +1,6 @@
 package com.cavcav.swiftcart.user.dto.response;
 
+import com.cavcav.swiftcart.user.model.Address;
 import com.cavcav.swiftcart.user.model.User;
 import com.cavcav.swiftcart.user.model.UserProfile;
 
