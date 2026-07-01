@@ -3,6 +3,7 @@ package com.cavcav.swiftcart.product.service;
 import com.cavcav.swiftcart.common.exception.BusinessException;
 import com.cavcav.swiftcart.product.dto.request.CreateCategoryRequest;
 import com.cavcav.swiftcart.product.dto.response.CategoryResponse;
+import com.cavcav.swiftcart.product.dto.response.CategoryTreeResponse;
 import com.cavcav.swiftcart.product.model.Category;
 import com.cavcav.swiftcart.product.repository.CategoryRepository;
 import jakarta.transaction.Transactional;
@@ -10,6 +11,8 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
+
+import java.util.List;
 
 @Service
 @Slf4j
@@ -48,6 +51,23 @@ public class CategoryServiceImpl implements CategoryService {
         return CategoryResponse.from(saved);
 
     }
+
+//    @Override
+//    public List<CategoryResponse> getCategories() {
+//        return categoryRepository.findAll()
+//                .stream()
+//                .map(CategoryResponse::from)
+//                .toList();
+//    }
+//    @Override
+//    public List<CategoryTreeResponse> getCategoryTree() {
+//        List<Category> all = categoryRepository.findAll();
+//        return all.stream()
+//                .filter(c -> c.getParentCategory() == null)
+//                .map(c -> CategoryTreeResponse.from(c, all))
+//                .toList();
+//    }
+
 
 
 }

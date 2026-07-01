@@ -1,12 +1,17 @@
 package com.cavcav.swiftcart.product.controller;
 
+import com.cavcav.swiftcart.common.response.ApiResponse;
 import com.cavcav.swiftcart.product.dto.request.CreateCategoryRequest;
 import com.cavcav.swiftcart.product.dto.response.CategoryResponse;
+import com.cavcav.swiftcart.product.dto.response.CategoryTreeResponse;
 import com.cavcav.swiftcart.product.service.CategoryService;
+import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
+
+import java.util.List;
 
 @RestController
 @RequestMapping("/api/v1/category")
@@ -14,11 +19,20 @@ import org.springframework.web.bind.annotation.*;
 public class CategoryController {
     private final CategoryService categoryService;
 
-
     @PostMapping
     @PreAuthorize("hasRole('ADMIN')")
-    public ResponseEntity<CategoryResponse> createCategory(@RequestBody CreateCategoryRequest request) {
-        return ResponseEntity.ok(categoryService.createCategory(request));
+    public ResponseEntity<ApiResponse<CategoryResponse>> createCategory(
+            @Valid @RequestBody CreateCategoryRequest request) {
+        return ResponseEntity.ok(ApiResponse.success(categoryService.createCategory(request)));
+    }
+
+    @GetMapping("/tree")
+    public ResponseEntity<ApiResponse<List<CategoryTreeResponse>>> getCategoryTree() {
+        return ResponseEntity.ok(ApiResponse.success(categoryService.getCategoryTree()));
+    }
+    @GetMapping
+    public ResponseEntity<ApiResponse<List<CategoryResponse>>> getCategories() {
+        return ResponseEntity.ok(ApiResponse.success(categoryService.getCategories()));
     }
 
 }
