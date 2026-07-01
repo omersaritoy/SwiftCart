@@ -19,10 +19,8 @@ public class CategoryServiceImpl implements CategoryService {
 
     private final CategoryRepository categoryRepository;
 
-
     @Override
     @Transactional
-
     public CategoryResponse createCategory(CreateCategoryRequest request) {
         log.info("Creating category: name={}", request.name());
 
