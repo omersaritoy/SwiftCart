@@ -5,6 +5,7 @@ import com.cavcav.swiftcart.product.dto.request.CreateCategoryRequest;
 import com.cavcav.swiftcart.product.dto.response.CategoryResponse;
 import com.cavcav.swiftcart.product.dto.response.CategoryTreeResponse;
 import com.cavcav.swiftcart.product.service.CategoryService;
+import jakarta.annotation.security.PermitAll;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
@@ -14,7 +15,7 @@ import org.springframework.web.bind.annotation.*;
 import java.util.List;
 
 @RestController
-@RequestMapping("/api/v1/category")
+@RequestMapping("/api/v1/categories")
 @RequiredArgsConstructor
 public class CategoryController {
     private final CategoryService categoryService;
@@ -27,10 +28,12 @@ public class CategoryController {
     }
 
     @GetMapping("/tree")
+
     public ResponseEntity<ApiResponse<List<CategoryTreeResponse>>> getCategoryTree() {
         return ResponseEntity.ok(ApiResponse.success(categoryService.getCategoryTree()));
     }
     @GetMapping
+
     public ResponseEntity<ApiResponse<List<CategoryResponse>>> getCategories() {
         return ResponseEntity.ok(ApiResponse.success(categoryService.getCategories()));
     }

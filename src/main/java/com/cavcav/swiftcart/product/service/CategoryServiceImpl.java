@@ -12,6 +12,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 
+import java.util.ArrayList;
 import java.util.List;
 
 @Service
@@ -26,48 +27,44 @@ public class CategoryServiceImpl implements CategoryService {
     @Transactional
     public CategoryResponse createCategory(CreateCategoryRequest request) {
         log.info("Creating category: name={}", request.name());
-
         Category parentCategory = null;
 
         if (request.parentCategoryId() != null && !request.parentCategoryId().isBlank()) {
-            parentCategory = categoryRepository.findById(request.parentCategoryId())
-                    .orElseThrow(() -> {
-                        log.warn("Parent category not found: id={}", request.parentCategoryId());
-                        return new BusinessException(
-                                "Parent category not found",
-                                "PARENT_CATEGORY_NOT_FOUND",
-                                HttpStatus.NOT_FOUND
-                        );
-                    });
+            parentCategory = categoryRepository.findById(request.parentCategoryId()).orElseThrow(() -> {
+                log.warn("Parent category not found: id={}", request.parentCategoryId());
+                return new BusinessException(
+                        "Parent category not found",
+                        "PARENT_CATEGORY_NOT_FOUND",
+                        HttpStatus.NOT_FOUND
+                );
+            });
         }
         Category category = Category.builder()
                 .name(request.name())
                 .description(request.description())
-                .parentCategory(parentCategory) // null olabilir, ana kategori demek
+                .parentCategory(parentCategory)
                 .isActive(true)
                 .build();
-        Category saved = categoryRepository.save(category);
+        Category saved=categoryRepository.save(category);
+
         log.info("Category created: id={}, name={}", saved.getId(), saved.getName());
         return CategoryResponse.from(saved);
 
+
     }
 
-//    @Override
-//    public List<CategoryResponse> getCategories() {
-//        return categoryRepository.findAll()
-//                .stream()
-//                .map(CategoryResponse::from)
-//                .toList();
-//    }
-//    @Override
-//    public List<CategoryTreeResponse> getCategoryTree() {
-//        List<Category> all = categoryRepository.findAll();
-//        return all.stream()
-//                .filter(c -> c.getParentCategory() == null)
-//                .map(c -> CategoryTreeResponse.from(c, all))
-//                .toList();
-//    }
+    @Override
+    public List<CategoryResponse> getCategories() {
+        return categoryRepository.findAll().stream().map(CategoryResponse::from).toList();
+    }
 
+    @Override
+    public List<CategoryTreeResponse> getCategoryTree() {
+
+        List<Category> all = categoryRepository.findAll();
+        return CategoryTreeResponse.buildTree(all);
+
+    }
 
 
 }
