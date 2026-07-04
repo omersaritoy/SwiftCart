@@ -23,7 +23,6 @@ public record CreateProductRequest(
         Integer stock,
 
         @NotBlank(message = "Category is required")
-        String categoryId,
+        String categoryId
 
-        List<String> imageUrls
 ) {}

@@ -2,6 +2,7 @@ package com.cavcav.swiftcart.product.controller;
 
 import com.cavcav.swiftcart.common.response.ApiResponse;
 import com.cavcav.swiftcart.product.dto.request.CreateCategoryRequest;
+import com.cavcav.swiftcart.product.dto.request.UpdateCategoryRequest;
 import com.cavcav.swiftcart.product.dto.response.CategoryResponse;
 import com.cavcav.swiftcart.product.dto.response.CategoryTreeResponse;
 import com.cavcav.swiftcart.product.service.CategoryService;
@@ -28,14 +29,22 @@ public class CategoryController {
     }
 
     @GetMapping("/tree")
-
     public ResponseEntity<ApiResponse<List<CategoryTreeResponse>>> getCategoryTree() {
         return ResponseEntity.ok(ApiResponse.success(categoryService.getCategoryTree()));
     }
     @GetMapping
-
     public ResponseEntity<ApiResponse<List<CategoryResponse>>> getCategories() {
         return ResponseEntity.ok(ApiResponse.success(categoryService.getCategories()));
+    }
+    @PatchMapping("/{id}")
+    @PreAuthorize("hasRole('ADMIN')")
+    public ResponseEntity<ApiResponse<CategoryResponse>> updateCategory(@RequestBody UpdateCategoryRequest request, @PathVariable String  id) {
+        return ResponseEntity.ok(ApiResponse.success(categoryService.updateCategory(request,id)));
+    }
+    @DeleteMapping("/{id}")
+    @PreAuthorize("hasRole('ADMIN')")
+    public ResponseEntity<ApiResponse<String>> deleteCategory(@PathVariable String id) {
+        return ResponseEntity.ok(ApiResponse.success(categoryService.deleteCategory(id)));
     }
 
 }

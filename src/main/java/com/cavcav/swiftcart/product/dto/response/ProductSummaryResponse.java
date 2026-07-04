@@ -17,7 +17,7 @@ public record ProductSummaryResponse(
                 product.getName(),
                 product.getPrice(),
                 product.getImageUrls() != null && !product.getImageUrls().isEmpty()
-                        ? product.getImageUrls().get(0)
+                        ? product.getImageUrls().getFirst()
                         : null,
                 product.getIsActive()
         );

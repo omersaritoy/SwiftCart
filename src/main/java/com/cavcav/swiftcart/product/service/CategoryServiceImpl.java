@@ -2,6 +2,7 @@ package com.cavcav.swiftcart.product.service;
 
 import com.cavcav.swiftcart.common.exception.BusinessException;
 import com.cavcav.swiftcart.product.dto.request.CreateCategoryRequest;
+import com.cavcav.swiftcart.product.dto.request.UpdateCategoryRequest;
 import com.cavcav.swiftcart.product.dto.response.CategoryResponse;
 import com.cavcav.swiftcart.product.dto.response.CategoryTreeResponse;
 import com.cavcav.swiftcart.product.model.Category;
@@ -45,7 +46,7 @@ public class CategoryServiceImpl implements CategoryService {
                 .parentCategory(parentCategory)
                 .isActive(true)
                 .build();
-        Category saved=categoryRepository.save(category);
+        Category saved = categoryRepository.save(category);
 
         log.info("Category created: id={}, name={}", saved.getId(), saved.getName());
         return CategoryResponse.from(saved);
@@ -64,6 +65,55 @@ public class CategoryServiceImpl implements CategoryService {
         List<Category> all = categoryRepository.findAll();
         return CategoryTreeResponse.buildTree(all);
 
+    }
+
+    @Override
+    @Transactional
+    public CategoryResponse updateCategory(UpdateCategoryRequest request, String categoryId) {
+        Category category = categoryRepository.findById(categoryId)
+                .orElseThrow(() -> new BusinessException(
+                        "Category Not Found", "NOT_FOUND", HttpStatus.NOT_FOUND));
+
+        if (request.name() != null) {
+            category.setName(request.name());
+        }
+        if (request.description() != null) {
+            category.setDescription(request.description());
+        }
+        if (request.parentCategoryId() != null) {
+            Category parent = categoryRepository.findById(request.parentCategoryId())
+                    .orElseThrow(() -> new BusinessException(
+                            "Parent Category Not Found", "PARENT_NOT_FOUND", HttpStatus.NOT_FOUND));
+
+            validateNoCycle(category, parent);
+            category.setParentCategory(parent);
+        }
+        // Category updated = categoryRepository.save(category);
+        return CategoryResponse.from(category);
+    }
+
+    @Override
+    public String deleteCategory(String categoryId) {
+        Category category = categoryRepository.findById(categoryId)
+                .orElseThrow(() -> new BusinessException(
+                        "Category Not Found", "NOT_FOUND", HttpStatus.NOT_FOUND));
+
+        categoryRepository.delete(category);
+        return "Category deleted";
+    }
+
+    private void validateNoCycle(Category category, Category newParent) {
+        Category current = newParent;
+        while (current != null) {
+            if (current.getId().equals(category.getId())) {
+                throw new BusinessException(
+                        "Category cannot be a descendant of itself",
+                        "INVALID_PARENT",
+                        HttpStatus.BAD_REQUEST
+                );
+            }
+            current = current.getParentCategory();
+        }
     }
 
 
