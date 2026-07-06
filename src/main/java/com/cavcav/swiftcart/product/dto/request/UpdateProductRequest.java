@@ -13,7 +13,6 @@ public record UpdateProductRequest(
         @DecimalMin(value = "0.0", inclusive = false, message = "Price must be greater than 0")
         BigDecimal price,
 
-        String categoryId,
-        List<String> imageUrls
+        String categoryId
 ) {}
 

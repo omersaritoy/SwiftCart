@@ -38,6 +38,7 @@ public class SecurityConfig {
                         ).permitAll()
                         .requestMatchers("/favicon.ico").permitAll()
                         .requestMatchers(HttpMethod.GET, "/api/v1/categories/**").permitAll()
+                        .requestMatchers(HttpMethod.GET,"/api/v1/products/**").permitAll()
                         //.requestMatchers("/api/v1/users/**").hasRole("ADMIN")
                         .anyRequest().authenticated())
                 .sessionManagement(customizer -> customizer.sessionCreationPolicy(SessionCreationPolicy.STATELESS))

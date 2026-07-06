@@ -6,7 +6,6 @@ import com.cavcav.swiftcart.product.dto.request.UpdateCategoryRequest;
 import com.cavcav.swiftcart.product.dto.response.CategoryResponse;
 import com.cavcav.swiftcart.product.dto.response.CategoryTreeResponse;
 import com.cavcav.swiftcart.product.service.CategoryService;
-import jakarta.annotation.security.PermitAll;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
