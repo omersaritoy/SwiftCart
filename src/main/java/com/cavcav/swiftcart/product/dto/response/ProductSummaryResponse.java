@@ -2,6 +2,7 @@ package com.cavcav.swiftcart.product.dto.response;
 
 import com.cavcav.swiftcart.product.model.Product;
 
+import java.io.Serializable;
 import java.math.BigDecimal;
 
 public record ProductSummaryResponse(
@@ -10,7 +11,7 @@ public record ProductSummaryResponse(
         BigDecimal price,
         String imageUrl,
         Boolean isActive
-) {
+) implements Serializable {
     public static ProductSummaryResponse from(Product product) {
         return new ProductSummaryResponse(
                 product.getId(),
