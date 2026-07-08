@@ -79,13 +79,14 @@ public class ProductController {
         return ResponseEntity.ok(ApiResponse.success(productService.updateStockById(request, id, principal.user())));
     }
 
-    @PatchMapping("{id}/status")
+    @PatchMapping("/{id}/status")
     @PreAuthorize("hasRole('SELLER')")
     public ResponseEntity<ApiResponse<ProductResponse>> updateProductStatus(@PathVariable String id, @AuthenticationPrincipal UserPrincipal principal) {
         return ResponseEntity.ok(ApiResponse.success(productService.updateStatus(id, principal.user())));
     }
 
     @DeleteMapping("/{id}")
+    @PreAuthorize("hasRole('SELLER')")
     public ResponseEntity<ApiResponse<String>> deleteProduct(@PathVariable String id, @AuthenticationPrincipal UserPrincipal principal) {
         return ResponseEntity.ok(ApiResponse.success(productService.deleteProductById(id, principal.user())));
     }

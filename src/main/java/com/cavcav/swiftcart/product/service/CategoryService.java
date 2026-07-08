@@ -14,4 +14,5 @@ public interface CategoryService {
     List<CategoryTreeResponse> getCategoryTree();
     CategoryResponse updateCategory(UpdateCategoryRequest request,String categoryId);
     String deleteCategory(String categoryId);
+    CategoryResponse getCategoryById(String id);
 }

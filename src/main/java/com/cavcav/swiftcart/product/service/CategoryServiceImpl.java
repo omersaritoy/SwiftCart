@@ -102,6 +102,18 @@ public class CategoryServiceImpl implements CategoryService {
         return "Category deleted";
     }
 
+    @Override
+    public CategoryResponse getCategoryById(String id) {
+        Category category=categoryRepository.findById(id).orElseThrow(()->new BusinessException(
+                "Category Not Found",
+                "CATEGORY_NOT_FOUND",
+                HttpStatus.NOT_FOUND
+        ));
+
+        return CategoryResponse.from(category);
+
+    }
+
     private void validateNoCycle(Category category, Category newParent) {
         Category current = newParent;
         while (current != null) {

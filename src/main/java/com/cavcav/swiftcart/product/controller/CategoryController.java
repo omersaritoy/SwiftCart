@@ -17,7 +17,7 @@ import java.util.List;
 @RestController
 @RequestMapping("/api/v1/categories")
 @RequiredArgsConstructor
-public class CategoryController {
+public class    CategoryController {
     private final CategoryService categoryService;
 
     @PostMapping
@@ -44,6 +44,10 @@ public class CategoryController {
     @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<ApiResponse<String>> deleteCategory(@PathVariable String id) {
         return ResponseEntity.ok(ApiResponse.success(categoryService.deleteCategory(id)));
+    }
+    @GetMapping("/{id}")
+    public ResponseEntity<ApiResponse<CategoryResponse>> getCategoryById(@PathVariable String id) {
+        return ResponseEntity.ok(ApiResponse.success(categoryService.getCategoryById(id)));
     }
 
 }
