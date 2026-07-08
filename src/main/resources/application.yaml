@@ -45,7 +45,7 @@ logging:
         security: Trace
       hibernate: warn
 server:
-  port: 8081
+  port: 8080
 app:
   base:
     url: http://localhost:8081
@@ -55,8 +55,6 @@ jwt:
   refresh-secret: ${JWT_REFRESH_KEY:Axq5ZKcgIlGYM5asdaRWHeSsay0SADSADSAvg}
   access-expiration: 900000
   refresh-expiration: 604800000
-
-
 
 rate:
   limiter:
