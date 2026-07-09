@@ -6,11 +6,13 @@ import jakarta.persistence.*;
 import lombok.*;
 
 import java.util.ArrayList;
+import java.util.List;
 
-@EqualsAndHashCode(callSuper = true)
+
 @Entity
 @Table(name = "carts")
-@Data
+@Getter
+@Setter
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
