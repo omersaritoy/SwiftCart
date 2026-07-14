@@ -31,7 +31,16 @@ public class CartServiceImpl implements CartService {
 
     @Override
     public CartResponse getMyCart(User user) {
-        return null;
+        Cart cart = cartRepository.findByUserId(user.getId()).orElseGet(() -> {
+                    log.info("Creating new cart for user: userId={}", user.getId());
+                    return Cart.builder()
+                            .user(user)
+                            .items(new ArrayList<>())
+                            .build();
+                }
+        );
+
+        return CartResponse.from(cart);
     }
 
     @Override
@@ -90,7 +99,7 @@ public class CartServiceImpl implements CartService {
             cart.getItems().add(newItem);
             log.info("New item added to cart: productId={}", product.getId());
         }
-        Cart saved=cartRepository.save(cart);
+        Cart saved = cartRepository.save(cart);
         log.info("Cart updated: cartId={}, userId={}", saved.getId(), user.getId());
         return CartResponse.from(saved);
 
