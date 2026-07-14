@@ -1,5 +1,6 @@
 package com.cavcav.swiftcart.cart.service;
 
+import com.cavcav.swiftcart.cart.Repository.CartItemRepository;
 import com.cavcav.swiftcart.cart.Repository.CartRepository;
 import com.cavcav.swiftcart.cart.dto.request.AddToCartRequest;
 import com.cavcav.swiftcart.cart.dto.request.UpdateCartItemRequest;
@@ -27,6 +28,7 @@ public class CartServiceImpl implements CartService {
 
     private final ProductRepository productRepository;
     private final CartRepository cartRepository;
+    private final CartItemRepository cartItemRepository;
 
 
     @Override
@@ -113,7 +115,8 @@ public class CartServiceImpl implements CartService {
 
     @Override
     public void removeCartItem(String cartItemId, User user) {
-
+        CartItem item=cartItemRepository.findById(cartItemId).orElseThrow();
+        cartItemRepository.delete(item);
     }
 
     @Override
