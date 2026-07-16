@@ -14,6 +14,7 @@ import com.cavcav.swiftcart.product.repository.ProductRepository;
 import com.cavcav.swiftcart.user.model.User;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.boot.autoconfigure.graphql.GraphQlProperties;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -109,18 +110,79 @@ public class CartServiceImpl implements CartService {
     }
 
     @Override
-    public CartResponse updateCartItem(String cartItemId, UpdateCartItemRequest request, User user) {
-        return null;
+    public CartResponse updateCartItem(String cartItemId,
+                                       UpdateCartItemRequest request,
+                                       User user) {
+
+        Cart cart = cartRepository.findByUserId(user.getId())
+                .orElseThrow(() -> new BusinessException(
+                        "Cart Not Found",
+                        "CART_NOT_FOUND",
+                        HttpStatus.NOT_FOUND));
+
+        CartItem item = cartItemRepository.findById(cartItemId)
+                .orElseThrow(() -> new BusinessException(
+                        "Item Not Found",
+                        "ITEM_NOT_FOUND",
+                        HttpStatus.NOT_FOUND));
+
+        if (!cart.getItems().contains(item)) {
+            throw new BusinessException(
+                    "Item Not Found in Cart",
+                    "ITEM_NOT_FOUND",
+                    HttpStatus.NOT_FOUND);
+        }
+
+        if (request.quantity() <= 0) {
+            throw new BusinessException(
+                    "Quantity must be greater than zero.",
+                    "INVALID_QUANTITY",
+                    HttpStatus.BAD_REQUEST);
+        }
+
+        if (request.quantity() > item.getProduct().getStock()) {
+            throw new BusinessException(
+                    "Requested quantity exceeds available stock.",
+                    "INSUFFICIENT_STOCK",
+                    HttpStatus.BAD_REQUEST);
+        }
+
+        item.setQuantity(request.quantity());
+
+        cartItemRepository.save(item);
+
+        return CartResponse.from(cart);
     }
 
     @Override
     public void removeCartItem(String cartItemId, User user) {
-        CartItem item=cartItemRepository.findById(cartItemId).orElseThrow();
+        CartItem item = cartItemRepository.findById(cartItemId)
+                .orElseThrow(() -> new BusinessException(
+                        "Item Not Found",
+                        "ITEM_NOT_FOUND",
+                        HttpStatus.NOT_FOUND));
+
+        if (!item.getCart().getUser().getId().equals(user.getId())) {
+            throw new BusinessException(
+                    "Item Not Found",
+                    "ITEM_NOT_FOUND",
+                    HttpStatus.NOT_FOUND
+            );
+        }
+
         cartItemRepository.delete(item);
     }
 
     @Override
     public void clearCart(User user) {
+        Cart cart = cartRepository.findByUserId(user.getId())
+                .orElseThrow(() -> new BusinessException(
+                        "Cart Not Found",
+                        "CART_NOT_FOUND",
+                        HttpStatus.NOT_FOUND));
+        CartItem item=cartItemRepository.findByCartId(cart.getId());
+        cartItemRepository.delete(item);
+
 
     }
 }
