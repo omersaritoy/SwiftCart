@@ -20,6 +20,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.ArrayList;
+import java.util.List;
 import java.util.Optional;
 
 @Service
@@ -174,15 +175,23 @@ public class CartServiceImpl implements CartService {
     }
 
     @Override
+    @Transactional
     public void clearCart(User user) {
-        Cart cart = cartRepository.findByUserId(user.getId())
-                .orElseThrow(() -> new BusinessException(
-                        "Cart Not Found",
-                        "CART_NOT_FOUND",
-                        HttpStatus.NOT_FOUND));
-        CartItem item=cartItemRepository.findByCartId(cart.getId());
-        cartItemRepository.delete(item);
+        log.info("Clearing cart: userId={}", user.getId());
 
+        Cart cart = cartRepository.findByUserId(user.getId())
+                .orElseThrow(() -> {
+                    log.warn("Cart not found: userId={}", user.getId());
+                    return new BusinessException(
+                            "Cart not found",
+                            "CART_NOT_FOUND",
+                            HttpStatus.NOT_FOUND
+                    );
+                });
+        cart.getItems().clear();
+        cartRepository.save(cart);
+        
+        log.info("Cart cleared: cartId={}, userId={}", cart.getId(), user.getId());
 
     }
 }
