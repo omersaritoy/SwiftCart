@@ -111,23 +111,35 @@ public class CartServiceImpl implements CartService {
     }
 
     @Override
+    @Transactional
     public CartResponse updateCartItem(String cartItemId,
                                        UpdateCartItemRequest request,
                                        User user) {
 
+        log.info("Updating cart item: cartItemId={}, userId={}, requestedQuantity={}",
+                cartItemId, user.getId(), request.quantity());
+
         Cart cart = cartRepository.findByUserId(user.getId())
-                .orElseThrow(() -> new BusinessException(
-                        "Cart Not Found",
-                        "CART_NOT_FOUND",
-                        HttpStatus.NOT_FOUND));
+                .orElseThrow(() -> {
+                    log.warn("Cart not found for userId={}", user.getId());
+                    return new BusinessException(
+                            "Cart Not Found",
+                            "CART_NOT_FOUND",
+                            HttpStatus.NOT_FOUND);
+                });
 
         CartItem item = cartItemRepository.findById(cartItemId)
-                .orElseThrow(() -> new BusinessException(
-                        "Item Not Found",
-                        "ITEM_NOT_FOUND",
-                        HttpStatus.NOT_FOUND));
+                .orElseThrow(() -> {
+                    log.warn("Cart item not found: cartItemId={}", cartItemId);
+                    return new BusinessException(
+                            "Item Not Found",
+                            "ITEM_NOT_FOUND",
+                            HttpStatus.NOT_FOUND);
+                });
 
         if (!cart.getItems().contains(item)) {
+            log.warn("Cart item does not belong to user's cart: cartItemId={}, userId={}",
+                    cartItemId, user.getId());
             throw new BusinessException(
                     "Item Not Found in Cart",
                     "ITEM_NOT_FOUND",
@@ -135,6 +147,8 @@ public class CartServiceImpl implements CartService {
         }
 
         if (request.quantity() <= 0) {
+            log.warn("Invalid quantity: cartItemId={}, quantity={}",
+                    cartItemId, request.quantity());
             throw new BusinessException(
                     "Quantity must be greater than zero.",
                     "INVALID_QUANTITY",
@@ -142,26 +156,43 @@ public class CartServiceImpl implements CartService {
         }
 
         if (request.quantity() > item.getProduct().getStock()) {
+            log.warn("Insufficient stock while updating cart: productId={}, stock={}, requested={}",
+                    item.getProduct().getId(),
+                    item.getProduct().getStock(),
+                    request.quantity());
+
             throw new BusinessException(
                     "Requested quantity exceeds available stock.",
                     "INSUFFICIENT_STOCK",
                     HttpStatus.BAD_REQUEST);
         }
 
+        int oldQuantity = item.getQuantity();
         item.setQuantity(request.quantity());
 
         cartItemRepository.save(item);
 
+        log.info("Cart item updated successfully: cartItemId={}, productId={}, oldQuantity={}, newQuantity={}",
+                item.getId(),
+                item.getProduct().getId(),
+                oldQuantity,
+                item.getQuantity());
+
         return CartResponse.from(cart);
     }
-
     @Override
     public void removeCartItem(String cartItemId, User user) {
+        log.info("Removing item: userId={}", user.getId());
+
         CartItem item = cartItemRepository.findById(cartItemId)
-                .orElseThrow(() -> new BusinessException(
-                        "Item Not Found",
-                        "ITEM_NOT_FOUND",
-                        HttpStatus.NOT_FOUND));
+                .orElseThrow(() -> {
+                    log.warn("Cart item not found: cartItemId={}", cartItemId);
+                    return new BusinessException(
+                            "Item Not Found",
+                            "ITEM_NOT_FOUND",
+                            HttpStatus.NOT_FOUND);
+                });
+
 
         if (!item.getCart().getUser().getId().equals(user.getId())) {
             throw new BusinessException(
