@@ -4,10 +4,7 @@ import com.cavcav.swiftcart.product.model.Product;
 import com.cavcav.swiftcart.user.model.BaseEntity;
 import com.cavcav.swiftcart.user.model.User;
 import jakarta.persistence.*;
-import lombok.AllArgsConstructor;
-import lombok.Data;
-import lombok.EqualsAndHashCode;
-import lombok.NoArgsConstructor;
+import lombok.*;
 
 import javax.sound.sampled.Port;
 
@@ -17,6 +14,7 @@ import javax.sound.sampled.Port;
 @NoArgsConstructor
 @AllArgsConstructor
 @Data
+@Builder
 public class Review extends BaseEntity {
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "user_id",nullable = false)
