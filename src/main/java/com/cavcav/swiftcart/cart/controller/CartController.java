@@ -28,7 +28,7 @@ public class CartController {
 
     @PostMapping
     public ResponseEntity<ApiResponse<CartResponse>> addToCart(@RequestBody AddToCartRequest request, @AuthenticationPrincipal UserPrincipal principal) {
-        return ResponseEntity.<ApiResponse<CartResponse>>ok(ApiResponse.<CartResponse>success(cartService.addToCart(request, principal.user())));
+        return ResponseEntity.ok(ApiResponse.success(cartService.addToCart(request, principal.user())));
     }
 
     @PutMapping("/cart-item/{cartItemId}")

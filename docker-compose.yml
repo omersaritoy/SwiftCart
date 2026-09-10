@@ -6,7 +6,7 @@ services:
     container_name: swift-cart-postgres
     restart: always
     ports:
-      - "5432:5432"
+      - "5434:5432"
     environment:
       POSTGRES_DB: swift-cart
       POSTGRES_USER: postgres
@@ -22,8 +22,8 @@ services:
     image: redis:7
     ports:
       - "6379:6379"
-  app:
-    build: .
+#  app:
+#    build: .
 
 volumes:
   postgres_data:
