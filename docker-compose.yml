@@ -22,8 +22,24 @@ services:
     image: redis:7
     ports:
       - "6379:6379"
+    volumes:
+      - redis_data:/var/lib/redis
+  rabbitmq:
+    image: rabbitmq:3-management-alpine
+    container_name: rabbitmq
+    restart: always
+    ports:
+      - "5672:5672"    # uygulama bağlantısı
+      - "15672:15672"  # yönetim paneli (localhost:15672)
+    environment:
+      RABBITMQ_DEFAULT_USER: guest
+      RABBITMQ_DEFAULT_PASS: guest
+    volumes:
+      - rabbitmq_data:/var/lib/rabbitmq
 #  app:
 #    build: .
 
 volumes:
   postgres_data:
+  redis_data:
+  rabbitmq_data:
