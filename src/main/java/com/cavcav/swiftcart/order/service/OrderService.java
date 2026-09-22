@@ -3,9 +3,12 @@ package com.cavcav.swiftcart.order.service;
 import com.cavcav.swiftcart.cart.Repository.CartRepository;
 import com.cavcav.swiftcart.cart.model.Cart;
 import com.cavcav.swiftcart.cart.model.CartItem;
+import com.cavcav.swiftcart.common.config.RabbitMQConfig;
 import com.cavcav.swiftcart.common.exception.BusinessException;
 import com.cavcav.swiftcart.common.response.PaginationResponse;
-import com.cavcav.swiftcart.notfication.dto.OrderCancelledEvent;
+import com.cavcav.swiftcart.notfication.dto.OrderStatusChangedEvent;
+import com.cavcav.swiftcart.notfication.event.OrderCancelledEvent;
+import com.cavcav.swiftcart.notfication.event.OrderCreatedEvent;
 import com.cavcav.swiftcart.notfication.service.EmailService;
 import com.cavcav.swiftcart.order.dto.request.CreateOrderRequest;
 import com.cavcav.swiftcart.order.dto.request.UpdateOrderStatusRequest;
@@ -28,6 +31,7 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.aspectj.weaver.ast.Or;
 import org.jetbrains.annotations.NotNull;
+import org.springframework.amqp.rabbit.core.RabbitTemplate;
 import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
@@ -54,15 +58,17 @@ public class OrderService {
     private final ProductRepository productRepository;
     private final EmailService emailService;
     private static final Set<String> ALLOWED_ORDER_SORT_FIELDS = Set.of("createdAt", "totalPrice", "status");
-    private static final Map<OrderStatus,Set<OrderStatus>> ALLOWED_TRANSITIONS=Map.of(
-            OrderStatus.PENDING,Set.of(OrderStatus.PAID),
-            OrderStatus.PAID,Set.of(OrderStatus.PROCESSING),
+    private static final Map<OrderStatus, Set<OrderStatus>> ALLOWED_TRANSITIONS = Map.of(
+            OrderStatus.PENDING, Set.of(OrderStatus.PAID),
+            OrderStatus.PAID, Set.of(OrderStatus.PROCESSING),
             OrderStatus.PROCESSING, Set.of(OrderStatus.SHIPPED),
             OrderStatus.SHIPPED, Set.of(OrderStatus.DELIVERED),
-            OrderStatus.DELIVERED,Set.of(),
-            OrderStatus.CANCELLED,Set.of()
+            OrderStatus.DELIVERED, Set.of(),
+            OrderStatus.CANCELLED, Set.of()
     );
     private final ApplicationEventPublisher eventPublisher;
+
+    private final RabbitTemplate rabbitTemplate;
 
     @Transactional
     public OrderResponse createOrder(CreateOrderRequest request, User user) {
@@ -82,8 +88,22 @@ public class OrderService {
         cart.getItems().clear();
         cartRepository.save(cart);
 
-        emailService.sendOrderConfirmationEmail(user.getEmail(), savedOrder);
-        log.info("Order confirmation email sent: orderId={}, userId={}", savedOrder.getId(), user.getId());
+        OrderCreatedEvent event = new OrderCreatedEvent(
+                savedOrder.getId(),
+                user.getId(),
+                user.getEmail(),
+                savedOrder.getTotalPrice(),
+                savedOrder.getItems().stream()
+                        .map(OrderItem::getProductName)
+                        .toList(),
+                savedOrder.getCreatedAt()
+        );
+        rabbitTemplate.convertAndSend(RabbitMQConfig.EXCHANGE, RabbitMQConfig.ORDER_CREATED_KEY, event);
+        log.info("OrderCreatedEvent published: orderId={}", savedOrder.getId());
+
+
+        //emailService.sendOrderConfirmationEmail(user.getEmail(), savedOrder);
+        //log.info("Order confirmation email sent: orderId={}, userId={}", savedOrder.getId(), user.getId());
 
         return OrderResponse.from(savedOrder);
     }
@@ -130,9 +150,16 @@ public class OrderService {
         order.setStatus(OrderStatus.CANCELLED);
         order.setCancelledAt(LocalDateTime.now());
         restoreStock(order);
+        OrderCancelledEvent cancelEvent = new OrderCancelledEvent(
+                order.getId(),
+                user.getId(),
+                user.getEmail(),
+                order.getTotalPrice(),
+                order.getCancelledAt()
+        );
+        rabbitTemplate.convertAndSend(RabbitMQConfig.EXCHANGE, RabbitMQConfig.ORDER_CANCELLED_KEY, cancelEvent);
         log.info("Order cancelled: orderId={}, userId={}", orderId, user.getId());
 
-        emailService.sendOrderCancellationEmail(user.getEmail(), order);
 
     }
 
@@ -159,11 +186,11 @@ public class OrderService {
         OrderStatus newStatus = request.status();
         log.info("Update order status request: orderId={}, newStatus={}, userId={}", orderId, newStatus, seller.getId());
 
-        Order order=getOrder(orderId);
-        if(seller.getRole()!=Role.ADMIN){
+        Order order = getOrder(orderId);
+        if (seller.getRole() != Role.ADMIN) {
             boolean sellsInThisOrder = order.getItems().stream()
                     .anyMatch(item -> item.getProduct().getSeller().getId().equals(seller.getId()));
-            if(!sellsInThisOrder){
+            if (!sellsInThisOrder) {
                 log.warn("Unauthorized order status update attempt: orderId={}, sellerId={}", orderId, seller.getId());
                 throw new BusinessException("You do not sell in this order", "ORDER_ACCESS_DENIED", HttpStatus.FORBIDDEN);
             }
@@ -181,18 +208,20 @@ public class OrderService {
         order.setStatus(newStatus);
         log.info("Order status updated: orderId={}, from={}, to={}", orderId, currentStatus, newStatus);
 
-        eventPublisher.publishEvent(new OrderCancelledEvent.OrderStatusChangedEvent(order.getId(), order.getUser().getEmail(), newStatus));
+        eventPublisher.publishEvent(new OrderStatusChangedEvent(order.getId(), order.getUser().getEmail(), newStatus));
 
         return OrderResponse.from(order);
     }
+
     @TransactionalEventListener(phase = TransactionPhase.AFTER_COMMIT)
-    public void onOrderStatusChanged(OrderCancelledEvent.OrderStatusChangedEvent event) {
+    public void onOrderStatusChanged(OrderStatusChangedEvent event) {
         orderRepository.findById(event.orderId())
                 .ifPresentOrElse(
                         order -> emailService.sendOrderStatusChangedEmail(event.userEmail(), order, event.newStatus()),
                         () -> log.error("Order not found for status change email: orderId={}", event.orderId())
                 );
     }
+
     private void restoreStock(Order order) {
         for (OrderItem item : order.getItems())
             productRepository.increaseStock(item.getProduct().getId(), item.getQuantity());
@@ -225,22 +254,29 @@ public class OrderService {
         for (CartItem item : cart.getItems()) {
             Product product = item.getProduct();
             int quantity = item.getQuantity();
-            int updatedRows = productRepository.decreaseStock(product.getId(), quantity);
+
+            // ✅ clearAutomatically=true persistence context'i temizlemeden
+            // ÖNCE gereken tüm alanları oku (proxy hâlâ session'a bağlıyken)
+            String productId = product.getId();
+            String productName = product.getName();
+            BigDecimal price = product.getPrice();
+
+            int updatedRows = productRepository.decreaseStock(productId, quantity);
             if (updatedRows == 0) {
-                log.warn("Insufficient stock: productId={}, requested={}", product.getId(), quantity);
+                log.warn("Insufficient stock: productId={}, requested={}", productId, quantity);
                 throw new BusinessException("Quantity Bigger Than Stock", "QUANTITY_NEED_DOWN", HttpStatus.BAD_REQUEST);
             }
-            BigDecimal itemTotal = product.getPrice().multiply(BigDecimal.valueOf(quantity));
+
+            BigDecimal itemTotal = price.multiply(BigDecimal.valueOf(quantity));
             order.getItems().add(OrderItem.builder()
                     .order(order)
                     .product(product)
-                    .productName(product.getName())
+                    .productName(productName)
                     .priceAtOrder(item.getPriceAtAddedTime())
                     .quantity(quantity)
                     .totalPrice(itemTotal)
                     .build());
             orderTotal = orderTotal.add(itemTotal);
-
         }
         return orderTotal;
     }

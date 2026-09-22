@@ -20,7 +20,7 @@ public class RateLimitService2 {
     }
 
     public void checkSignupLimit(String ip) {
-        check("signup:" + ip, 3, Duration.ofHours(1));
+        check("signup:" + ip, 10, Duration.ofHours(1));
     }
 
     public void checkVerifyLimit(String token) {

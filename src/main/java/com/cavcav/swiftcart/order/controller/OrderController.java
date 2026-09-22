@@ -1,6 +1,7 @@
 package com.cavcav.swiftcart.order.controller;
 
 
+import com.cavcav.swiftcart.auth.security.UserPrincipal;
 import com.cavcav.swiftcart.common.response.ApiResponse;
 import com.cavcav.swiftcart.common.response.PaginationResponse;
 import com.cavcav.swiftcart.order.dto.request.CreateOrderRequest;
@@ -26,9 +27,9 @@ public class OrderController {
     @PostMapping
     public ResponseEntity<OrderResponse> createOrder(
             @Valid @RequestBody CreateOrderRequest request,
-            @AuthenticationPrincipal User user
+            @AuthenticationPrincipal UserPrincipal userPrincipal
     ) {
-        OrderResponse response = orderService.createOrder(request, user);
+        OrderResponse response = orderService.createOrder(request, userPrincipal.user());
         return ResponseEntity.status(HttpStatus.CREATED).body(response);
     }
 

@@ -1,8 +1,9 @@
 package com.cavcav.swiftcart.notfication.listener;
 
 
-import com.cavcav.swiftcart.notfication.dto.OrderCancelledEvent;
-import com.cavcav.swiftcart.notfication.dto.OrderCreatedEvent;
+import com.cavcav.swiftcart.notfication.dto.OrderStatusChangedEvent;
+import com.cavcav.swiftcart.notfication.event.OrderCancelledEvent;
+import com.cavcav.swiftcart.notfication.event.OrderCreatedEvent;
 import com.cavcav.swiftcart.notfication.service.EmailService;
 import com.cavcav.swiftcart.order.repository.OrderRepository;
 import lombok.RequiredArgsConstructor;
@@ -38,7 +39,7 @@ public class OrderEventListener {
     }
 
     @TransactionalEventListener(phase = TransactionPhase.AFTER_COMMIT)
-    public void onOrderStatusChanged(OrderCancelledEvent.OrderStatusChangedEvent event) {
+    public void onOrderStatusChanged(OrderStatusChangedEvent event) {
         orderRepository.findById(event.orderId())
                 .ifPresentOrElse(
                         order -> emailService.sendOrderStatusChangedEmail(event.userEmail(), order, event.newStatus()),

@@ -12,20 +12,18 @@ import org.springframework.amqp.rabbit.connection.ConnectionFactory;
 @Configuration
 public class RabbitMQConfig {
 
-    //Exchange
-    public static final String EXCHANGE="swiftcart.exchange";
+    // Exchange
+    public static final String EXCHANGE = "swiftcart.exchange";
 
-    //Queues
-    public static final String EMAIL_QUEUE="email.queue";
-    public static final String NOTIFICATION_QUEUE="notification.queue";
+    // Queue'lar
+    public static final String EMAIL_QUEUE = "email.queue";
+    public static final String NOTIFICATION_QUEUE = "notification.queue";
 
-    // Routing keys
-
+    // Routing key'ler
     public static final String ORDER_CREATED_KEY = "order.created";
     public static final String ORDER_CANCELLED_KEY = "order.cancelled";
     public static final String PAYMENT_SUCCESS_KEY = "payment.success";
     public static final String PAYMENT_FAILED_KEY = "payment.failed";
-
 
     @Bean
     public TopicExchange exchange(){
@@ -41,10 +39,7 @@ public class RabbitMQConfig {
     }
     @Bean
     public Binding emailBinding(Queue emailQueue,TopicExchange exchange){
-        return BindingBuilder
-                .bind(emailQueue)
-                .to(exchange)
-                .with("order.# , payment.#");
+        return BindingBuilder.bind(emailQueue).to(exchange).with("order.#");
     }
     @Bean
     public Binding notificationBinding(Queue notificationQueue, TopicExchange exchange) {
@@ -59,10 +54,9 @@ public class RabbitMQConfig {
     }
     @Bean
     public RabbitTemplate rabbitTemplate(ConnectionFactory connectionFactory){
-
-            RabbitTemplate template=new RabbitTemplate(connectionFactory);
-            template.setMessageConverter(messageConverter());
-            return template;
+        RabbitTemplate rabbitTemplate=new RabbitTemplate(connectionFactory);
+        rabbitTemplate.setMessageConverter(messageConverter());
+        return rabbitTemplate;
     }
 
 }

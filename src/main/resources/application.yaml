@@ -36,7 +36,8 @@ spring:
         smtp:
           auth: true
           starttls:
-            enable: false
+            enable: true
+            required: true
   rabbitmq:
     host: localhost
     port: 5672

@@ -1,7 +1,10 @@
 package com.cavcav.swiftcart.payment.service;
 
 
+import com.cavcav.swiftcart.common.config.RabbitMQConfig;
 import com.cavcav.swiftcart.common.exception.BusinessException;
+import com.cavcav.swiftcart.notfication.event.PaymentFailedEvent;
+import com.cavcav.swiftcart.notfication.event.PaymentSuccessEvent;
 import com.cavcav.swiftcart.notfication.service.EmailService;
 import com.cavcav.swiftcart.order.model.Order;
 import com.cavcav.swiftcart.order.model.OrderStatus;
@@ -15,6 +18,7 @@ import com.cavcav.swiftcart.user.model.User;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.amqp.rabbit.core.RabbitTemplate;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 
@@ -28,6 +32,8 @@ public class PaymentService {
     private final PaymentRepository paymentRepository;
     private final OrderRepository orderRepository;
     private final EmailService emailService;
+    private final RabbitTemplate rabbitTemplate;
+
 
 
     @Transactional
@@ -66,7 +72,7 @@ public class PaymentService {
                     HttpStatus.CONFLICT
             );
         }
-        boolean isSuccess = Math.random() > 0.2;
+        boolean isSuccess = Math.random() > 0.1;
         Payment payment = Payment.builder()
                 .order(order)
                 .user(user)
@@ -79,12 +85,33 @@ public class PaymentService {
             order.setStatus(OrderStatus.PAID);
             orderRepository.save(order);
             log.info("Payment successful: orderId={}, transactionId={}", order.getId(), payment.getTransactionId());
+            PaymentSuccessEvent successEvent = new PaymentSuccessEvent(
+                    payment.getId(),
+                    order.getId(),
+                    user.getId(),
+                    user.getEmail(),
+                    payment.getAmount(),
+                    payment.getTransactionId(),
+                    payment.getCreatedAt()
+            );
+            rabbitTemplate.convertAndSend(RabbitMQConfig.EXCHANGE, RabbitMQConfig.PAYMENT_SUCCESS_KEY, successEvent);
+
             emailService.sendPaymentSuccessEmail(user.getEmail(), order);
         } else {
             payment.setStatus(PaymentStatus.FAILED);
             payment.setFailureReason("Payment declined by bank");
             log.warn("Payment failed: orderId={}, userId={}", order.getId(), user.getId());
-            emailService.sendPaymentFailedEmail(user.getEmail(), order);
+            PaymentFailedEvent failedEvent = new PaymentFailedEvent(
+                    payment.getId(),
+                    order.getId(),
+                    user.getId(),
+                    user.getEmail(),
+                    payment.getAmount(),
+                    payment.getFailureReason(),
+                    payment.getCreatedAt()
+
+            );
+            rabbitTemplate.convertAndSend(RabbitMQConfig.EXCHANGE, RabbitMQConfig.PAYMENT_FAILED_KEY, failedEvent);
         }
         Payment saved = paymentRepository.save(payment);
         return PaymentResponse.from(saved);
@@ -166,6 +193,6 @@ public class PaymentService {
         log.info("Payment refunded: paymentId={}, orderId={}", payment.getId(), orderId);
         emailService.sendRefundEmail(user.getEmail(), payment.getOrder());
 
-        return PaymentResponse.from(saved);
+0        return PaymentResponse.from(saved);
     }
 }

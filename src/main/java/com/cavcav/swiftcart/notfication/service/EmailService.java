@@ -30,7 +30,7 @@ public class EmailService {
         this.mailSender = mailSender;
     }
 
-    @Async
+
     public void sendVerificationEmail(String toEmail, String token) {
         try {
             String verificationUrl = baseUrl + "/api/v1/auth/verify?token=" + token;
@@ -52,7 +52,7 @@ public class EmailService {
         }
     }
 
-    @Async
+
     public void sendOrderConfirmationEmail(String toEmail, Order order) {
         try {
             String orderTrackingUrl = baseUrl + "/api/v1/orders/" + order.getId();
@@ -75,7 +75,7 @@ public class EmailService {
         }
     }
 
-    @Async
+
     public void sendOrderCancellationEmail(String toEmail, Order order) {
         try {
             String orderTrackingUrl = baseUrl + "/api/v1/orders/" + order.getId();
@@ -97,7 +97,7 @@ public class EmailService {
         }
     }
 
-    @Async
+
     public void sendOrderStatusChangedEmail(String toEmail, Order order, OrderStatus newStatus) {
         try {
             String orderTrackingUrl = baseUrl + "/api/v1/orders/" + order.getId();
@@ -119,7 +119,7 @@ public class EmailService {
         }
     }
 
-    @Async
+
     public void sendPaymentSuccessEmail(String email, Order order) {
         try {
             String orderTrackingUrl = baseUrl + "/api/v1/orders/" + order.getId();
@@ -139,7 +139,7 @@ public class EmailService {
         }
     }
 
-    @Async
+
     public void sendPaymentFailedEmail(String email, Order order) {
         try {
             String orderTrackingUrl = baseUrl + "/api/v1/orders/" + order.getId();
@@ -161,7 +161,7 @@ public class EmailService {
         }
     }
 
-    @Async
+
     public void sendRefundEmail(String email, Order order) {
         try {
             String orderTrackingUrl = baseUrl + "/api/v1/orders/" + order.getId();
